@@ -244,10 +244,10 @@ function checkout(err){
   ${fld("ck-cpf","CPF",ck.cpf,'inputmode="numeric" placeholder="000.000.000-00"')}</div>
   <div class="grp"><span class="lbl">Como vai receber</span><div class="seg"><button type="button" data-a="mode" data-v="entrega" class="${ck.mode==="entrega"?"on":""}">Entrega</button><button type="button" data-a="mode" data-v="retirada" class="${ck.mode==="retirada"?"on":""}">Retirada</button></div></div>
   ${ck.mode==="entrega"?`<div class="grp"><label for="ck-bairro">Região de entrega</label><select id="ck-bairro">${FEES.map((f,i)=>`<option value="${i}"${i===ck.bairro?" selected":""}>${f[0]} (${BRL(f[1])})</option>`).join("")}</select></div>
-  <div class="addr">${fld("ck-rua","Rua",ck.rua,'autocomplete="address-line1" placeholder="Ex: Rua Guilherme Machado"')}
-  ${fld("ck-num","Número",ck.num,'inputmode="numeric" placeholder="98"')}</div>
-  ${fld("ck-bai","Bairro",ck.bai,'placeholder="Ex: Senhor do Bonfim"')}
-  ${fld("ck-comp","Complemento ou referência (opcional)",ck.comp,'placeholder="Ex: casa amarela, apto 2"')}`:""}
+  <div class="addr">${fld("ck-rua","Rua",ck.rua,'autocomplete="address-line1" placeholder="Nome da rua ou avenida"')}
+  ${fld("ck-num","Número",ck.num,'inputmode="numeric" placeholder="Nº"')}</div>
+  ${fld("ck-bai","Bairro",ck.bai,'placeholder="Seu bairro"')}
+  ${fld("ck-comp","Complemento ou referência (opcional)",ck.comp,'placeholder="Ex: casa de muro azul, apto 2"')}`:""}
   <div class="grp"><span class="lbl">Pagamento</span><div class="seg">${["Pix","Cartão","Dinheiro"].map(p=>`<button type="button" data-a="pay" data-v="${p}" class="${ck.pay===p?"on":""}">${p}</button>`).join("")}</div></div>
   ${ck.pay==="Dinheiro"?`<div class="grp"><label for="ck-troco">Troco para quanto?</label><input id="ck-troco" value="${esc(ck.troco)}" inputmode="decimal" placeholder="Ex: 100"></div>`:""}
   <div class="tot"><div><span>Subtotal</span><span>${BRL(s)}</span></div>${ck.mode==="entrega"?`<div><span>Entrega</span><span>${BRL(fee)}</span></div>`:""}<div class="big"><span>Total</span><span>${BRL(s+fee)}</span></div></div>
