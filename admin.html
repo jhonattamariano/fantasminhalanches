@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0f0d0b">
+<title>Painel Fantasminha</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@400;500;600;700&display=swap">
+<style>
+/* Painel de gestão mobile-first: lista por categoria, folha inferior para editar. Mesmo visual do cardápio. */
+:root{
+  --bg:#0f0d0b; --surface:#1b1814; --surface2:#26221c; --line:#3a332a;
+  --fg:#f6efe4; --muted:#b3a794; --accent:#ffa21a; --accent-ink:#1a1206;
+  --ok:#5fd38a; --bad:#ff8f7a;
+  --display:"Bebas Neue",Impact,"Arial Narrow",sans-serif;
+  --body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.4;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+img{max-width:100%}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:760px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--display);font-weight:400;letter-spacing:.02em;margin:0}
+input,select,textarea{width:100%;background:var(--surface2);color:var(--fg);border:1px solid var(--line);border-radius:10px;padding:11px 12px;font:inherit}
+textarea{resize:vertical;min-height:70px}
+label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.f{display:grid;gap:6px}
+.btn{background:var(--accent);color:var(--accent-ink);border:0;border-radius:10px;padding:12px 16px;font-weight:700}
+.btn:disabled{opacity:.5;cursor:wait}
+.ghost{background:none;border:1px solid var(--line);border-radius:10px;padding:10px 14px;font-weight:600}
+.danger{background:none;border:1px solid var(--bad);color:var(--bad);border-radius:10px;padding:10px 14px;font-weight:600}
+.err{color:var(--bad);margin:0;font-size:14px}
+
+/* login */
+.login{min-height:100vh;display:grid;place-items:center;padding-block:24px}
+.login form{width:100%;max-width:360px;display:grid;gap:14px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:24px}
+.login h1{font-size:40px;line-height:.95}
+.login h1 span{color:var(--accent)}
+.login p{margin:0;color:var(--muted);font-size:14px}
+
+/* topo */
+.top{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+.top .wrap{display:flex;align-items:center;gap:12px;padding-block:12px;flex-wrap:wrap}
+.top h1{font-size:28px;flex:1;min-width:0}
+.top h1 span{color:var(--accent)}
+.top a{color:var(--muted);font-size:14px}
+.tabs{display:flex;gap:6px;width:100%;overflow-x:auto}
+.tab{flex:none;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:7px 14px;font-weight:600;font-size:14px}
+.tab.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+
+main{padding-block:8px 80px}
+.cat{padding-top:22px;display:grid;gap:8px}
+.cat-h{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.cat-h h2{font-size:28px;color:var(--accent)}
+.row{display:grid;grid-template-columns:56px 1fr auto;gap:12px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 10px 8px 8px}
+.row.off{opacity:.55}
+.row .ph{width:56px;height:56px;border-radius:8px;object-fit:cover;background:var(--surface2);display:grid;place-items:center;color:var(--muted);font-size:11px;text-align:center;line-height:1.1}
+.row .info{min-width:0;background:none;border:0;text-align:left;padding:0;display:grid;gap:2px}
+.row .info b{font-weight:700;overflow-wrap:anywhere}
+.row .info b small{color:var(--muted);margin-right:6px}
+.row .info span{color:var(--muted);font-size:14px;font-variant-numeric:tabular-nums}
+.sw{position:relative;width:46px;height:28px;flex:none}
+.sw input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer;width:100%;height:100%}
+.sw i{position:absolute;inset:0;border-radius:999px;background:var(--line);transition:background .15s;pointer-events:none}
+.sw i::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:var(--fg);transition:transform .15s}
+.sw input:checked+i{background:var(--ok)}
+.sw input:checked+i::after{transform:translateX(18px)}
+.sw input:focus-visible+i{outline:2px solid var(--accent);outline-offset:2px}
+.swl{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;color:var(--muted)}
+
+/* listas simples (acréscimos, entrega) */
+.list{display:grid;gap:8px;padding-top:18px}
+.lrow{display:grid;grid-template-columns:1fr 110px auto auto;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px}
+.lrow.nofee{grid-template-columns:1fr 110px auto}
+.lrow .x{background:none;border:0;color:var(--muted);font-size:22px;width:32px;height:32px}
+@media (max-width:440px){.lrow{grid-template-columns:1fr 92px auto auto}}
+
+/* folha */
+.scrim{position:fixed;inset:0;z-index:20;background:rgba(0,0,0,.65);display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--surface);width:100%;max-width:760px;max-height:94%;overflow:auto;border-radius:18px 18px 0 0;padding-block:20px calc(20px + env(safe-area-inset-bottom,0px));padding-left:max(18px,env(safe-area-inset-left,0px));padding-right:max(18px,env(safe-area-inset-right,0px));display:grid;gap:14px}
+.sh-head{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.sh-head h3{font-size:30px}
+.close{background:var(--surface2);border:0;border-radius:999px;width:36px;height:36px;font-size:20px}
+.photo{display:grid;grid-template-columns:120px 1fr;gap:14px;align-items:center}
+.photo .pv{width:120px;height:120px;border-radius:12px;object-fit:cover;background:var(--surface2);display:grid;place-items:center;color:var(--muted);font-size:13px;text-align:center}
+.photo .acts{display:grid;gap:8px;justify-items:start}
+.file{position:relative;overflow:hidden}
+.file input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.g2{display:grid;grid-template-columns:110px 1fr;gap:10px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.seg button{background:var(--surface2);border:1px solid var(--line);border-radius:10px;padding:10px;font-weight:600}
+.seg button.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.foot{display:flex;gap:10px;justify-content:space-between;align-items:center;flex-wrap:wrap}
+.foot .btn{flex:1}
+.hint{color:var(--muted);font-size:13px;margin:0}
+.toggle-line{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--surface2);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.confirm{display:flex;gap:8px;align-items:center;flex-wrap:wrap;color:var(--bad);font-size:14px}
+
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:30;background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:999px;font-weight:600;font-size:14px;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+.toast.bad{background:var(--bad)}
+.empty{color:var(--muted);padding-block:30px;text-align:center}
+</style>
+</head>
+<body>
+
+<section class="login wrap" id="login" hidden>
+  <form id="loginForm">
+    <h1>Painel <span>Fantasminha</span></h1>
+    <p>Entre para mudar preços, fotos e itens do cardápio.</p>
+    <div class="f"><label for="em">E-mail</label><input id="em" type="email" autocomplete="username" required></div>
+    <div class="f"><label for="pw">Senha</label><input id="pw" type="password" autocomplete="current-password" required></div>
+    <p class="err" id="loginErr" hidden></p>
+    <button class="btn" id="loginBtn" type="submit">Entrar</button>
+  </form>
+</section>
+
+<div id="app" hidden>
+  <header class="top"><div class="wrap">
+    <h1>Painel <span>Fantasminha</span></h1>
+    <a href="./" target="_blank" rel="noopener">Ver cardápio</a>
+    <button class="ghost" id="logout" type="button">Sair</button>
+    <nav class="tabs" aria-label="Seções">
+      <button class="tab on" type="button" data-tab="itens">Cardápio</button>
+      <button class="tab" type="button" data-tab="addons">Acréscimos</button>
+      <button class="tab" type="button" data-tab="fees">Taxas de entrega</button>
+    </nav>
+  </div></header>
+  <main class="wrap" id="main"></main>
+</div>
+
+<div class="scrim" id="scrim" hidden></div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+const SB_URL="https://hoqssxvzyxkakwwtqstg.supabase.co", SB_KEY="sb_publishable_e_Ng5FaQreX1xhhlloOoIw_SE-PoAd3";
+const sb=supabase.createClient(SB_URL,SB_KEY);
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const BRL=v=>"R$ "+Number(v).toFixed(2).replace(".",",");
+const num=v=>{const n=parseFloat(String(v).replace(/\s|R\$/g,"").replace(",","."));return isNaN(n)?null:Math.round(n*100)/100};
+const money=v=>v==null?"":Number(v).toFixed(2).replace(".",",");
+let D={cats:[],items:[],addons:[],fees:[]}, tab="itens";
+
+let tt; function toast(msg,bad){const t=$("#toast");t.textContent=msg;t.classList.toggle("bad",!!bad);t.hidden=false;clearTimeout(tt);tt=setTimeout(()=>t.hidden=true,bad?4000:1800)}
+function fail(e){console.error(e);toast(e?.message?.includes("row-level")?"Sem permissão. Confira se seu e-mail está na lista de admins.":"Não salvou: "+(e?.message||"erro"),true)}
+
+/* ---------- login ---------- */
+async function boot(){
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session){$("#login").hidden=false;$("#app").hidden=true;return}
+  const {data:ok,error}=await sb.rpc("is_admin");
+  if(error||!ok){await sb.auth.signOut();showLoginErr(error?"Não foi possível verificar o acesso.":"Este e-mail não tem acesso ao painel.");$("#login").hidden=false;$("#app").hidden=true;return}
+  $("#login").hidden=true;$("#app").hidden=false;load();
+}
+function showLoginErr(m){const e=$("#loginErr");e.textContent=m;e.hidden=false}
+$("#loginForm").addEventListener("submit",async e=>{
+  e.preventDefault();$("#loginErr").hidden=true;const b=$("#loginBtn");b.disabled=true;b.textContent="Entrando…";
+  const {error}=await sb.auth.signInWithPassword({email:$("#em").value.trim(),password:$("#pw").value});
+  b.disabled=false;b.textContent="Entrar";
+  if(error)return showLoginErr(error.message.includes("Invalid")?"E-mail ou senha incorretos.":error.message);
+  boot();
+});
+$("#logout").onclick=async()=>{await sb.auth.signOut();location.reload()};
+
+/* ---------- dados ---------- */
+async function load(){
+  $("#main").innerHTML='<p class="empty">Carregando…</p>';
+  const [c,i,a,f]=await Promise.all([sb.from("categories").select("*").order("sort"),sb.from("items").select("*").order("sort"),sb.from("addons").select("*").order("sort"),sb.from("delivery_fees").select("*").order("sort")]);
+  const err=c.error||i.error||a.error||f.error;
+  if(err){$("#main").innerHTML='<p class="empty">Não foi possível carregar. Atualize a página.</p>';return fail(err)}
+  D={cats:c.data,items:i.data,addons:a.data,fees:f.data};render();
+}
+document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{tab=b.dataset.tab;document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("on",x===b));render()});
+function render(){({itens:renderItems,addons:()=>renderList("addons"),fees:()=>renderList("fees")})[tab]()}
+
+function priceLabel(it){return it.sizes&&it.sizes.length?it.sizes.map(s=>`${s.label} ${money(s.price)}`).join(" · "):BRL(it.price)}
+function renderItems(){
+  $("#main").innerHTML=D.cats.map(c=>{
+    const its=D.items.filter(i=>i.category_id===c.id);
+    return `<section class="cat"><div class="cat-h"><h2>${esc(c.name)}</h2><button class="ghost" type="button" data-new="${esc(c.id)}">+ Novo item</button></div>
+    ${its.map(i=>`<div class="row${i.available?"":" off"}">
+      ${i.photo_url?`<img class="ph" src="${esc(i.photo_url)}" alt="" loading="lazy" width="56" height="56">`:`<span class="ph">sem<br>foto</span>`}
+      <button class="info" type="button" data-edit="${i.id}"><b>${i.number?`<small>${i.number}</small>`:""}${esc(i.name)}</b><span>${priceLabel(i)}</span></button>
+      <span class="swl"><span class="sw"><input type="checkbox" data-avail="${i.id}" ${i.available?"checked":""} aria-label="${esc(i.name)} disponível"><i></i></span>${i.available?"Disponível":"Esgotado"}</span>
+    </div>`).join("")||'<p class="hint">Nenhum item.</p>'}</section>`}).join("");
+}
+$("#main").addEventListener("click",e=>{
+  const ed=e.target.closest("[data-edit]"); if(ed)return editItem(D.items.find(i=>i.id==ed.dataset.edit));
+  const nw=e.target.closest("[data-new]"); if(nw)return editItem(null,nw.dataset.new);
+});
+$("#main").addEventListener("change",async e=>{
+  const t=e.target;
+  if(t.dataset.avail){const it=D.items.find(i=>i.id==t.dataset.avail);const v=t.checked;
+    const {error}=await sb.from("items").update({available:v,updated_at:new Date().toISOString()}).eq("id",it.id);
+    if(error){t.checked=!v;return fail(error)} it.available=v;renderItems();toast(v?`${it.name} disponível`:`${it.name} marcado como esgotado`);return}
+  if(t.dataset.lt){saveListRow(t.dataset.lt,t.dataset.id)}
+});
+
+/* ---------- editar item ---------- */
+function openSheet(html){const s=$("#scrim");s.innerHTML=`<div class="sheet" role="dialog" aria-modal="true">${html}</div>`;s.hidden=false;document.body.style.overflow="hidden";return s.firstElementChild}
+function closeSheet(){$("#scrim").hidden=true;$("#scrim").innerHTML="";document.body.style.overflow=""}
+$("#scrim").addEventListener("click",e=>{if(e.target.id==="scrim")closeSheet()});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("#scrim").hidden)closeSheet()});
+
+function editItem(it,catId){
+  const isNew=!it;
+  const st={photo:it?.photo_url||null,file:null,sized:!!(it?.sizes&&it.sizes.length)};
+  const sz=l=>money(it?.sizes?.find(s=>s.label===l)?.price);
+  const sh=openSheet(`<div class="sh-head"><h3>${isNew?"Novo item":"Editar item"}</h3><button class="close" type="button" data-x aria-label="Fechar">×</button></div>
+  <div class="photo"><span class="pv" id="pv">sem foto</span><div class="acts">
+    <span class="ghost file">${st.photo?"Trocar foto":"Adicionar foto"}<input type="file" id="ph" accept="image/*"></span>
+    <button class="ghost" type="button" id="rmPh"${st.photo?"":" hidden"}>Remover foto</button>
+    <p class="hint">Use uma foto em pé ou quadrada, com o lanche no centro.</p></div></div>
+  <div class="g2"><div class="f"><label for="no">Número</label><input id="no" inputmode="numeric" value="${esc(it?.number??"")}"></div>
+    <div class="f"><label for="nm">Nome</label><input id="nm" value="${esc(it?.name??"")}" required></div></div>
+  <div class="f"><label for="ds">Ingredientes / descrição</label><textarea id="ds">${esc(it?.description??"")}</textarea></div>
+  <div class="f"><label for="cat">Categoria</label><select id="cat">${D.cats.map(c=>`<option value="${esc(c.id)}"${c.id===(it?.category_id||catId)?" selected":""}>${esc(c.name)}</option>`).join("")}</select></div>
+  <div class="f"><span class="lbl"><label>Preço</label></span><div class="seg"><button type="button" data-mode="0" class="${st.sized?"":"on"}">Preço único</button><button type="button" data-mode="1" class="${st.sized?"on":""}">Tamanhos P / M / G</button></div></div>
+  <div class="f" id="single"${st.sized?" hidden":""}><label for="pr">Valor (R$)</label><input id="pr" inputmode="decimal" value="${esc(money(it?.price))}" placeholder="0,00"></div>
+  <div class="g3" id="sizes"${st.sized?"":" hidden"}>${["P","M","G"].map(l=>`<div class="f"><label for="s${l}">${l} (R$)</label><input id="s${l}" inputmode="decimal" value="${esc(sz(l))}" placeholder="0,00"></div>`).join("")}</div>
+  <div class="f"><label for="op">Opções de escolha (opcional)</label><input id="op" value="${esc((it?.options||[]).join(", "))}" placeholder="Ex: Geleia de pimenta, Abacaxi"><p class="hint">Separe por vírgula. O cliente escolhe uma.</p></div>
+  <div class="toggle-line"><span>Disponível no cardápio</span><span class="sw"><input type="checkbox" id="av" ${it?.available===false?"":"checked"} aria-label="Disponível"><i></i></span></div>
+  <p class="err" id="er" hidden></p>
+  <div class="foot">${isNew?"":`<span id="delWrap"><button class="danger" type="button" id="del">Excluir</button></span>`}<button class="btn" type="button" id="save">${isNew?"Criar item":"Salvar"}</button></div>`);
+
+  const pv=()=>{const box=sh.querySelector("#pv");const src=st.file?URL.createObjectURL(st.file):st.photo;
+    box.outerHTML=src?`<img class="pv" id="pv" src="${esc(src)}" alt="Foto do item">`:`<span class="pv" id="pv">sem foto</span>`;
+    sh.querySelector("#rmPh").hidden=!src};
+  pv();
+  sh.querySelector("#ph").onchange=e=>{const f=e.target.files[0];if(!f)return;if(!f.type.startsWith("image/"))return toast("Escolha um arquivo de imagem",true);st.file=f;pv()};
+  sh.onclick=async e=>{
+    if(e.target.closest("[data-x]"))return closeSheet();
+    const m=e.target.closest("[data-mode]");if(m){st.sized=m.dataset.mode==="1";sh.querySelectorAll("[data-mode]").forEach(b=>b.classList.toggle("on",b===m));sh.querySelector("#single").hidden=st.sized;sh.querySelector("#sizes").hidden=!st.sized;return}
+    if(e.target.id==="rmPh"){st.file=null;st.photo=null;sh.querySelector("#ph").value="";pv();return}
+    if(e.target.id==="del"){sh.querySelector("#delWrap").innerHTML=`<span class="confirm">Excluir de vez? <button class="danger" type="button" id="delYes">Sim, excluir</button><button class="ghost" type="button" id="delNo">Não</button></span>`;return}
+    if(e.target.id==="delNo"){sh.querySelector("#delWrap").innerHTML=`<button class="danger" type="button" id="del">Excluir</button>`;return}
+    if(e.target.id==="delYes"){const {error}=await sb.from("items").delete().eq("id",it.id);if(error)return fail(error);D.items=D.items.filter(x=>x.id!==it.id);closeSheet();renderItems();toast("Item excluído");return}
+    if(e.target.id==="save")save();
+  };
+  async function save(){
+    const er=sh.querySelector("#er");er.hidden=true;const errMsg=m=>{er.textContent=m;er.hidden=false};
+    const name=sh.querySelector("#nm").value.trim(); if(!name)return errMsg("Coloque o nome do item.");
+    const noRaw=sh.querySelector("#no").value.trim(); const number=noRaw?parseInt(noRaw,10):null;
+    if(noRaw&&isNaN(number))return errMsg("O número precisa ser só dígitos.");
+    let price,sizes=null;
+    if(st.sized){sizes=[];for(const l of ["P","M","G"]){const v=num(sh.querySelector("#s"+l).value);if(v!=null)sizes.push({label:l,price:v})}
+      if(!sizes.length)return errMsg("Coloque o valor de pelo menos um tamanho.");price=sizes[0].price}
+    else{price=num(sh.querySelector("#pr").value);if(price==null)return errMsg("Coloque o preço. Ex: 24,90");}
+    const opts=sh.querySelector("#op").value.split(",").map(s=>s.trim()).filter(Boolean);
+    const cat=sh.querySelector("#cat").value;
+    const btn=sh.querySelector("#save");btn.disabled=true;btn.textContent="Salvando…";
+    try{
+      let photo=st.photo;
+      if(st.file){btn.textContent="Enviando foto…";photo=await uploadPhoto(st.file,name)}
+      const row={category_id:cat,number,name,description:sh.querySelector("#ds").value.trim()||null,price,sizes,options:opts.length?opts:null,photo_url:photo,available:sh.querySelector("#av").checked,updated_at:new Date().toISOString()};
+      if(isNew){const maxSort=Math.max(0,...D.items.filter(x=>x.category_id===cat).map(x=>x.sort||0));row.sort=maxSort+1;
+        const {data,error}=await sb.from("items").insert(row).select().single();if(error)throw error;D.items.push(data)}
+      else{const {data,error}=await sb.from("items").update(row).eq("id",it.id).select().single();if(error)throw error;Object.assign(it,data)}
+      closeSheet();renderItems();toast(isNew?"Item criado":"Salvo");
+    }catch(e){btn.disabled=false;btn.textContent=isNew?"Criar item":"Salvar";fail(e)}
+  }
+}
+async function uploadPhoto(file,name){
+  const bmp=await createImageBitmap(file);
+  const max=1000, k=Math.min(1,max/Math.max(bmp.width,bmp.height));
+  const c=document.createElement("canvas");c.width=Math.round(bmp.width*k);c.height=Math.round(bmp.height*k);
+  c.getContext("2d").drawImage(bmp,0,0,c.width,c.height);
+  let blob=await new Promise(r=>c.toBlob(r,"image/webp",.82)), ext="webp";
+  if(!blob||blob.type!=="image/webp"){blob=await new Promise(r=>c.toBlob(r,"image/jpeg",.85));ext="jpg"}
+  const slug=name.normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"item";
+  const path=`${slug}-${Date.now()}.${ext}`;
+  const {error}=await sb.storage.from("fotos").upload(path,blob,{contentType:blob.type,cacheControl:"31536000"});
+  if(error)throw error;
+  return sb.storage.from("fotos").getPublicUrl(path).data.publicUrl;
+}
+
+/* ---------- acréscimos e taxas ---------- */
+const LT={addons:{table:"addons",val:"price",title:"Acréscimos",ph:"Ex: Bacon",avail:true,hint:"Desligue para esconder um acréscimo que acabou."},
+          fees:{table:"delivery_fees",val:"fee",title:"Taxas de entrega",ph:"Ex: Bela Vista",avail:false,hint:"O cliente escolhe o bairro e a taxa entra no total."}};
+function renderList(k){
+  const L=LT[k], rows=D[k];
+  $("#main").innerHTML=`<section class="cat"><div class="cat-h"><h2>${L.title}</h2><button class="ghost" type="button" id="addRow">+ Adicionar</button></div><p class="hint">${L.hint} As mudanças salvam sozinhas.</p>
+  <div class="list">${rows.map(r=>`<div class="lrow${L.avail?"":" nofee"}">
+    <input data-lt="${k}" data-id="${r.id}" data-f="name" value="${esc(r.name)}" aria-label="Nome">
+    <input data-lt="${k}" data-id="${r.id}" data-f="val" value="${esc(money(r[L.val]))}" inputmode="decimal" aria-label="Valor em reais">
+    ${L.avail?`<span class="sw"><input type="checkbox" data-lt="${k}" data-id="${r.id}" data-f="available" ${r.available?"checked":""} aria-label="Disponível"><i></i></span>`:""}
+    <button class="x" type="button" data-rm="${r.id}" aria-label="Excluir ${esc(r.name)}">×</button></div>`).join("")||'<p class="empty">Nada cadastrado.</p>'}</div></section>`;
+  $("#addRow").onclick=async()=>{const row={name:"Novo",[L.val]:0,sort:Math.max(0,...rows.map(r=>r.sort||0))+1};
+    const {data,error}=await sb.from(L.table).insert(row).select().single();if(error)return fail(error);D[k].push(data);renderList(k);
+    const ins=document.querySelectorAll(`.lrow [data-f="name"]`);ins[ins.length-1]?.select()};
+  $("#main").querySelectorAll("[data-rm]").forEach(b=>b.onclick=async()=>{
+    if(b.dataset.sure!=="1"){b.dataset.sure="1";b.textContent="?";b.setAttribute("aria-label","Toque de novo para excluir");setTimeout(()=>{if(b.isConnected){b.dataset.sure="";b.textContent="×"}},3000);return}
+    const {error}=await sb.from(L.table).delete().eq("id",b.dataset.rm);if(error)return fail(error);D[k]=D[k].filter(r=>r.id!=b.dataset.rm);renderList(k);toast("Excluído")});
+}
+async function saveListRow(k,id){
+  const L=LT[k], r=D[k].find(x=>x.id==id), q=f=>document.querySelector(`[data-lt="${k}"][data-id="${id}"][data-f="${f}"]`);
+  const name=q("name").value.trim(), val=num(q("val").value);
+  if(!name)return toast("O nome não pode ficar vazio",true);
+  if(val==null)return toast("Valor inválido. Ex: 3,50",true);
+  const upd={name,[L.val]:val}; if(L.avail)upd.available=q("available").checked;
+  const {error}=await sb.from(L.table).update(upd).eq("id",id);if(error)return fail(error);
+  Object.assign(r,upd);q("val").value=money(val);toast("Salvo");
+}
+
+sb.auth.onAuthStateChange((ev)=>{if(ev==="SIGNED_OUT"){$("#app").hidden=true;$("#login").hidden=false}});
+boot();
+</script>
+</body>
+</html>
