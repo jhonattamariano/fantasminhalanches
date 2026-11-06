@@ -282,7 +282,7 @@ function custMsg(o,to){
   return L.join("\n");
 }
 function openWa(url){let w=null;try{w=window.open(url,"_blank")}catch(e){}if(!w)location.href=url}
-const waCust=(o,to)=>`https://wa.me/55${String(o.phone).replace(/\D/g,"").replace(/^55(?=\d{10,11}$)/,"")}?text=${encodeURIComponent(custMsg(o,to))}`;
+const waCust=(o,to)=>`https://api.whatsapp.com/send?phone=55${String(o.phone).replace(/\D/g,"").replace(/^55(?=\d{10,11}$)/,"")}&text=${encodeURIComponent(custMsg(o,to))}`;
 function dayStart(){const d=new Date();d.setHours(0,0,0,0);return d.toISOString()}
 async function loadOrders(){const {data,error}=await sb.from("orders").select("*").gte("created_at",dayStart()).order("created_at",{ascending:false});if(error)return fail(error);D.orders=data}
 let chan, polling;
@@ -358,7 +358,7 @@ function renderOrders(){
 function card(o){
   const s=ST[o.status], nx=NEXT[o.status], tel=String(o.phone).replace(/\D/g,"");
   return `<article class="ord st-${o.status}"><header><b>#${nº(o)}</b><span class="pill" style="--c:${s[1]}">${s[0]}</span><span class="when">${hhmm(o.created_at)}</span></header>
-  <div class="who"><b>${esc(o.customer_name)}</b> · <a href="https://wa.me/55${tel}" target="_blank" rel="noopener">${esc(o.phone)}</a>${o.cpf?` · CPF ${esc(o.cpf)}`:""}</div>
+  <div class="who"><b>${esc(o.customer_name)}</b> · <a href="https://api.whatsapp.com/send?phone=55${tel}" target="_blank" rel="noopener">${esc(o.phone)}</a>${o.cpf?` · CPF ${esc(o.cpf)}`:""}</div>
   <div class="addr">${o.mode==="entrega"?`🛵 <b>${esc(o.street)}, ${esc(o.number)}</b> · ${esc(o.district)} · ${esc(o.region)}${o.complement?`<br><span>${esc(o.complement)}</span>`:""}`:"🏃 <b>Retirada no balcão</b>"}</div>
   <ul class="its">${o.items.map(it=>`<li><div class="iln"><span class="qb">${it.qty}x</span><div><b>${esc(it.name)}</b>${it.size?` <span class="tag">${SZ[it.size]||it.size}</span>`:""}${it.option?` <span class="tag">${esc(it.option)}</span>`:""}${it.number?` <small class="inum">nº ${it.number}</small>`:""}
     ${it.addons.map(a=>`<div class="sub">+ ${a.qty}x ${esc(a.name)}</div>`).join("")}${it.obs?`<div class="obs">Obs: ${esc(it.obs)}</div>`:""}</div></div></li>`).join("")}</ul>

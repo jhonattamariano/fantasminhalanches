@@ -230,7 +230,7 @@ function openInfo(){
     return {open:false,msg:`Fechado · abre ${k===0?"hoje":k===1?"amanhã":DIAS[(dow+k)%7]} às ${hfmt(d.open)}`}}
   return {open:false,msg:"Fechado no momento"};
 }
-function helpLink(){const n=WA||"5531973066832";const u=`https://wa.me/${n}?text=${encodeURIComponent("Olá, Fantasminha Lanches! 👻 Tenho uma dúvida:")}`;
+function helpLink(){const n=WA||"5531973066832";const u=`https://api.whatsapp.com/send?phone=${n}&text=${encodeURIComponent("Olá, Fantasminha Lanches! 👻 Tenho uma dúvida:")}`;
   const ph=n.replace(/^55/,"").replace(/^(\d\d)(\d)(\d{4})(\d{4})$/,"($1) $2 $3-$4");
   [$("#helpBtn"),$("#helpBox")].forEach(a=>{if(a){a.href=u;a.hidden=false}});const sp=$("#helpBox span");if(sp)sp.textContent=`Fale com a gente no WhatsApp · ${ph}`}
 function renderHours(){helpLink();const b=$("#hoursBox");if(!b||!HOURS)return;const order=[2,3,4,5,6,0,1],{dow}=spNow();
@@ -363,7 +363,7 @@ function waText(o){
   return L.join("\n");
 }
 function done(o){
-  const url=WA?`https://wa.me/${WA}?text=${encodeURIComponent(waText(o))}`:"";
+  const url=WA?`https://api.whatsapp.com/send?phone=${WA}&text=${encodeURIComponent(waText(o))}`:"";
   open(`<div class="sh-head"><div></div><button class="x" type="button" data-a="x" aria-label="Fechar">×</button></div>
   <div class="done">${$(".logo")?`<img class="done-logo" src="${$(".logo").src}" alt="" width="170" height="133">`:""}<h3>Pedido #${nº(o)} recebido!</h3>
   ${url?`<div class="laststep"><b>Falta só 1 passo:</b> envie o pedido no nosso WhatsApp pra gente confirmar com você. 👇</div>
