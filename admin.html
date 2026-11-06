@@ -121,6 +121,7 @@ main{padding-block:8px 80px}
 .its .obs{display:inline-block;margin-top:3px;background:var(--fg);color:var(--bg);font-weight:700;padding:1px 6px;border-radius:4px;font-size:14px}
 .foot2{display:flex;justify-content:space-between;align-items:center;font-variant-numeric:tabular-nums}
 .foot2 b{font-size:20px}
+.resend{color:var(--accent);font-size:14px}
 .acts2{display:flex;gap:8px;flex-wrap:wrap}.acts2 .btn{flex:1;text-align:center;text-decoration:none;display:flex;flex-direction:column;align-items:center;justify-content:center}.acts2 .btn small{font-weight:600;font-size:12px;opacity:.75}
 </style>
 </head>
@@ -210,6 +211,7 @@ function custMsg(o,to){const n=String(o.customer_name).split(" ")[0], t=BRL(o.to
     saiu:o.mode==="entrega"?`${n}, seu pedido *#${o.id}* saiu para entrega! 🛵\nTotal: *${t}* · Pagamento: ${o.payment}${o.change_for?` (troco p/ R$ ${o.change_for})`:""}`:`${n}, seu pedido *#${o.id}* está pronto para retirada! 🍔\nTotal: *${t}*`,
     concluido:`Pedido *#${o.id}* concluído. Obrigado pela preferência, ${n}! 👻🍔\nQualquer coisa, é só chamar.`,
     cancelado:`${n}, infelizmente seu pedido *#${o.id}* foi cancelado. Se tiver alguma dúvida, responda esta mensagem.`})[to]||""}
+function openWa(url){let w=null;try{w=window.open(url,"_blank")}catch(e){}if(!w)location.href=url}
 const waCust=(o,to)=>`https://wa.me/55${String(o.phone).replace(/\D/g,"").replace(/^55(?=\d{10,11}$)/,"")}?text=${encodeURIComponent(custMsg(o,to))}`;
 function dayStart(){const d=new Date();d.setHours(0,0,0,0);return d.toISOString()}
 async function loadOrders(){const {data,error}=await sb.from("orders").select("*").gte("created_at",dayStart()).order("created_at",{ascending:false});if(error)return fail(error);D.orders=data}
@@ -245,13 +247,15 @@ function card(o){
   <div class="addr">${o.mode==="entrega"?`🛵 <b>${esc(o.street)}, ${esc(o.number)}</b> · ${esc(o.district)} · ${esc(o.region)}${o.complement?`<br><span>${esc(o.complement)}</span>`:""}`:"🏃 <b>Retirada no balcão</b>"}</div>
   <ul class="its">${o.items.map(it=>`<li><b>${it.qty}x ${it.number?it.number+". ":""}${esc(it.name)}</b>${it.size?` (${SZ[it.size]||it.size})`:""}${it.option?` · ${esc(it.option)}`:""}
     ${it.addons.map(a=>`<div class="sub">+ ${a.qty}x ${esc(a.name)}</div>`).join("")}${it.obs?`<div class="obs">Obs: ${esc(it.obs)}</div>`:""}</li>`).join("")}</ul>
+  ${o.status!=="novo"?`<a class="resend" href="${waCust(o,o.status)}" target="_blank" rel="noopener">Reenviar aviso de "${s[0]}" no WhatsApp</a>`:""}
   <div class="foot2"><span>${esc(o.payment)}${o.change_for?` · troco p/ R$ ${esc(o.change_for)}`:""}</span><b>${BRL(o.total)}</b></div>
   ${nx||o.status==="novo"||o.status==="preparo"?`<div class="acts2">${nx?`<a class="btn" href="${waCust(o,nx[0])}" target="_blank" rel="noopener" data-st="${o.id}" data-to="${nx[0]}">${nx[1]} <small>· avisa no WhatsApp</small></a>`:""}${["novo","preparo"].includes(o.status)?`<button class="ghost" type="button" data-st="${o.id}" data-to="cancelado">Cancelar</button>`:""}</div>`:""}
   </article>`}
 $("#main").addEventListener("click",async e=>{const b=e.target.closest("[data-st]");if(!b)return;
   if(b.dataset.to==="cancelado"&&b.dataset.sure!=="1"){b.dataset.sure="1";b.textContent="Toque de novo pra cancelar";setTimeout(()=>{if(b.isConnected){b.dataset.sure="";b.textContent="Cancelar"}},3000);return}
-  if(b.dataset.to==="cancelado"){const o=D.orders.find(x=>x.id==b.dataset.st);if(o)window.open(waCust(o,"cancelado"),"_blank","noopener")}
-  if(b.tagName==="A")b.style.pointerEvents="none";b.disabled=true;const {error}=await sb.from("orders").update({status:b.dataset.to}).eq("id",b.dataset.st);
+  e.preventDefault();
+  const o0=D.orders.find(x=>x.id==b.dataset.st); if(o0)openWa(waCust(o0,b.dataset.to));
+  b.style.pointerEvents="none";b.disabled=true;const {error}=await sb.from("orders").update({status:b.dataset.to}).eq("id",b.dataset.st);
   if(error){b.disabled=false;return fail(error)}const o=D.orders.find(x=>x.id==b.dataset.st);o.status=b.dataset.to;renderOrders()});
 
 /* ---------- loja ---------- */

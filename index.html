@@ -285,7 +285,7 @@ function checkout(err){
     if(a==="rm"){cart.splice(+b.dataset.i,1);updBar();if(!cart.length)return close()}
     if(a==="mode")ck.mode=b.dataset.v; if(a==="pay")ck.pay=b.dataset.v;
     if(a==="send"){const ent=ck.mode==="entrega", tel=digits(ck.phone).length;
-      const chk=[["ck-name",!ck.name.trim(),"seu nome"],["ck-phone",tel<10||tel>11,"um WhatsApp com DDD"],["ck-cpf",!cpfOk(ck.cpf),"um CPF válido"],
+      const chk=[["ck-name",!ck.name.trim(),"seu nome"],["ck-phone",tel!==11||digits(ck.phone)[2]!=="9","um celular com DDD e 9 dígitos"],["ck-cpf",!cpfOk(ck.cpf),"um CPF válido"],
         ["ck-rua",ent&&!ck.rua.trim(),"a rua"],["ck-num",ent&&!ck.num.trim(),"o número"],["ck-bai",ent&&!ck.bai.trim(),"o bairro"]].filter(x=>x[1]);
       badF=chk.map(x=>x[0]);
       if(chk.length){const n=chk.map(x=>x[2]);checkout("Falta preencher "+(n.length>1?n.slice(0,-1).join(", ")+" e "+n.at(-1):n[0])+".");const f=$("#"+badF[0]);if(f){f.focus();f.scrollIntoView({block:"center"})}return}
