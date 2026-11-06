@@ -206,11 +206,25 @@ function render(){({pedidos:renderOrders,itens:renderItems,addons:()=>renderList
 const ST={novo:["Novo","#ffa21a"],preparo:["Em preparo","#6cb4ff"],saiu:["Saiu / pronto","#c38bff"],concluido:["Concluído","#5fd38a"],cancelado:["Cancelado","#ff8f7a"]};
 const NEXT={novo:["preparo","Começar preparo"],preparo:["saiu","Saiu pra entrega / pronto"],saiu:["concluido","Concluir"]};
 const SZ={P:"Pequeno",M:"Médio",G:"Grande"};
-function custMsg(o,to){const n=String(o.customer_name).split(" ")[0], t=BRL(o.total);
-  return ({preparo:`Olá, ${n}! 👻 Seu pedido *#${o.id}* da *Fantasminha Lanches* foi confirmado e já está sendo preparado. 🍔`,
-    saiu:o.mode==="entrega"?`${n}, seu pedido *#${o.id}* saiu para entrega! 🛵\nTotal: *${t}* · Pagamento: ${o.payment}${o.change_for?` (troco p/ R$ ${o.change_for})`:""}`:`${n}, seu pedido *#${o.id}* está pronto para retirada! 🍔\nTotal: *${t}*`,
-    concluido:`Pedido *#${o.id}* concluído. Obrigado pela preferência, ${n}! 👻🍔\nQualquer coisa, é só chamar.`,
-    cancelado:`${n}, infelizmente seu pedido *#${o.id}* foi cancelado. Se tiver alguma dúvida, responda esta mensagem.`})[to]||""}
+function custMsg(o,to){
+  const n=String(o.customer_name).trim().split(" ")[0], h=new Date().getHours();
+  const oi=h<12?"Bom dia":h<18?"Boa tarde":"Boa noite";
+  const head={
+    preparo:`${oi}, ${n}! 👻\nObrigado por pedir com a gente na *Fantasminha Lanches*! 🧡\n\nSeu pedido *#${o.id}* foi *confirmado* e já está sendo preparado. 🍔🔥`,
+    saiu:o.mode==="entrega"?`${oi}, ${n}! 👻\nSeu pedido *#${o.id}* acabou de *sair para entrega*! 🛵💨\nJá já chega quentinho aí.`:`${oi}, ${n}! 👻\nSeu pedido *#${o.id}* está *pronto para retirada*! 🍔\nPode vir buscar.`,
+    concluido:`${oi}, ${n}! 👻\nSeu pedido *#${o.id}* foi *concluído*.\nMuito obrigado por comprar com a *Fantasminha Lanches*! Esperamos que tenha gostado. 🧡`,
+    cancelado:`${oi}, ${n}. 👻\nInfelizmente seu pedido *#${o.id}* foi *cancelado*.\nSe tiver qualquer dúvida, é só responder esta mensagem.`}[to];
+  if(!head)return "";
+  const L=[head,"","🧾 *Seu pedido:*"];
+  o.items.forEach(it=>{L.push(`• ${it.qty}x ${it.name}${it.size?` (${SZ[it.size]||it.size})`:""}${it.option?` · ${it.option}`:""} · ${BRL(it.total)}`);
+    it.addons.forEach(a=>L.push(`   + ${a.qty}x ${a.name}`));if(it.obs)L.push(`   _Obs: ${it.obs}_`)});
+  L.push("");
+  if(+o.delivery_fee)L.push(`Subtotal: ${BRL(o.subtotal)}`,`Entrega: ${BRL(o.delivery_fee)}`);
+  L.push(`💰 *Total: ${BRL(o.total)}*`,`💳 Pagamento: ${o.payment}${o.change_for?` (troco para R$ ${o.change_for})`:""}`);
+  L.push(o.mode==="entrega"?`📍 Entrega: ${o.street}, ${o.number} · ${o.district}${o.complement?` (${o.complement})`:""}`:"📍 Retirada no balcão");
+  if(to!=="cancelado")L.push("","Qualquer dúvida, é só chamar por aqui! 👻🍔");
+  return L.join("\n");
+}
 function openWa(url){let w=null;try{w=window.open(url,"_blank")}catch(e){}if(!w)location.href=url}
 const waCust=(o,to)=>`https://wa.me/55${String(o.phone).replace(/\D/g,"").replace(/^55(?=\d{10,11}$)/,"")}?text=${encodeURIComponent(custMsg(o,to))}`;
 function dayStart(){const d=new Date();d.setHours(0,0,0,0);return d.toISOString()}
