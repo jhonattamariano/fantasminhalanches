@@ -105,6 +105,23 @@ main{padding-block:8px 80px}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:30;background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:999px;font-weight:600;font-size:14px;box-shadow:0 8px 24px rgba(0,0,0,.5)}
 .toast.bad{background:var(--bad)}
 .empty{color:var(--muted);padding-block:30px;text-align:center}
+.nb{display:inline-grid;place-items:center;min-width:20px;height:20px;border-radius:999px;background:var(--bad);color:#1a0703;font-size:12px;margin-left:4px;padding:0 5px}
+.olist{display:grid;gap:10px;padding-top:6px}
+.ord{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;display:grid;gap:8px;border-left:5px solid var(--line)}
+.ord.st-novo{border-left-color:var(--accent);box-shadow:0 0 0 1px rgba(255,162,26,.35)}
+.ord.st-concluido,.ord.st-cancelado{opacity:.6}
+.ord header{display:flex;align-items:center;gap:10px}
+.ord header b{font-family:var(--display);font-size:28px;font-weight:400;letter-spacing:.02em}
+.pill{border:1px solid var(--c);color:var(--c);border-radius:999px;padding:2px 10px;font-size:13px;font-weight:700}
+.when{margin-left:auto;color:var(--muted);font-variant-numeric:tabular-nums}
+.who a{color:var(--accent)}
+.addr span{color:var(--muted)}
+.its{list-style:none;margin:0;padding:10px 0;border-block:1px dashed var(--line);display:grid;gap:8px}
+.its .sub{color:var(--muted);font-size:14px;padding-left:14px}
+.its .obs{display:inline-block;margin-top:3px;background:var(--fg);color:var(--bg);font-weight:700;padding:1px 6px;border-radius:4px;font-size:14px}
+.foot2{display:flex;justify-content:space-between;align-items:center;font-variant-numeric:tabular-nums}
+.foot2 b{font-size:20px}
+.acts2{display:flex;gap:8px;flex-wrap:wrap}.acts2 .btn{flex:1}
 </style>
 </head>
 <body>
@@ -126,9 +143,11 @@ main{padding-block:8px 80px}
     <a href="./" target="_blank" rel="noopener">Ver cardápio</a>
     <button class="ghost" id="logout" type="button">Sair</button>
     <nav class="tabs" aria-label="Seções">
-      <button class="tab on" type="button" data-tab="itens">Cardápio</button>
+      <button class="tab on" type="button" data-tab="pedidos">Pedidos <span id="newBadge" class="nb" hidden>0</span></button>
+      <button class="tab" type="button" data-tab="itens">Cardápio</button>
       <button class="tab" type="button" data-tab="addons">Acréscimos</button>
       <button class="tab" type="button" data-tab="fees">Taxas de entrega</button>
+      <button class="tab" type="button" data-tab="loja">Loja</button>
     </nav>
   </div></header>
   <main class="wrap" id="main"></main>
@@ -146,7 +165,7 @@ const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&g
 const BRL=v=>"R$ "+Number(v).toFixed(2).replace(".",",");
 const num=v=>{const n=parseFloat(String(v).replace(/\s|R\$/g,"").replace(",","."));return isNaN(n)?null:Math.round(n*100)/100};
 const money=v=>v==null?"":Number(v).toFixed(2).replace(".",",");
-let D={cats:[],items:[],addons:[],fees:[]}, tab="itens";
+let D={cats:[],items:[],addons:[],fees:[],orders:[],settings:{}}, tab="pedidos", soundOn=false, unseen=0;
 
 let tt; function toast(msg,bad){const t=$("#toast");t.textContent=msg;t.classList.toggle("bad",!!bad);t.hidden=false;clearTimeout(tt);tt=setTimeout(()=>t.hidden=true,bad?4000:1800)}
 function fail(e){console.error(e);toast(e?.message?.includes("row-level")?"Sem permissão. Confira se seu e-mail está na lista de admins.":"Não salvou: "+(e?.message||"erro"),true)}
@@ -175,10 +194,69 @@ async function load(){
   const [c,i,a,f]=await Promise.all([sb.from("categories").select("*").order("sort"),sb.from("items").select("*").order("sort"),sb.from("addons").select("*").order("sort"),sb.from("delivery_fees").select("*").order("sort")]);
   const err=c.error||i.error||a.error||f.error;
   if(err){$("#main").innerHTML='<p class="empty">Não foi possível carregar. Atualize a página.</p>';return fail(err)}
-  D={cats:c.data,items:i.data,addons:a.data,fees:f.data};render();
+  D={...D,cats:c.data,items:i.data,addons:a.data,fees:f.data};
+  const st=await sb.from("settings").select("*");(st.data||[]).forEach(x=>D.settings[x.key]=x.value);
+  await loadOrders();listenOrders();render();
 }
 document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{tab=b.dataset.tab;document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("on",x===b));render()});
-function render(){({itens:renderItems,addons:()=>renderList("addons"),fees:()=>renderList("fees")})[tab]()}
+function render(){({pedidos:renderOrders,itens:renderItems,addons:()=>renderList("addons"),fees:()=>renderList("fees"),loja:renderLoja})[tab]();if(tab==="pedidos"){unseen=0;badge()}}
+
+/* ---------- pedidos ---------- */
+const ST={novo:["Novo","#ffa21a"],preparo:["Em preparo","#6cb4ff"],saiu:["Saiu / pronto","#c38bff"],concluido:["Concluído","#5fd38a"],cancelado:["Cancelado","#ff8f7a"]};
+const NEXT={novo:["preparo","Começar preparo"],preparo:["saiu","Saiu pra entrega / pronto"],saiu:["concluido","Concluir"]};
+const SZ={P:"Pequeno",M:"Médio",G:"Grande"};
+function dayStart(){const d=new Date();d.setHours(0,0,0,0);return d.toISOString()}
+async function loadOrders(){const {data,error}=await sb.from("orders").select("*").gte("created_at",dayStart()).order("created_at",{ascending:false});if(error)return fail(error);D.orders=data}
+let chan;
+function listenOrders(){if(chan)return;
+  chan=sb.channel("pedidos").on("postgres_changes",{event:"*",schema:"public",table:"orders"},pl=>{
+    if(pl.eventType==="INSERT"){D.orders.unshift(pl.new);alertNew(pl.new)}
+    else if(pl.eventType==="UPDATE"){const o=D.orders.find(x=>x.id===pl.new.id);if(o)Object.assign(o,pl.new)}
+    if(tab==="pedidos")renderOrders();
+  }).subscribe()}
+let actx;
+function beep(){if(!soundOn)return;try{actx=actx||new AudioContext();const t=actx.currentTime;[0,.22,.44].forEach((d,i)=>{const o=actx.createOscillator(),g=actx.createGain();o.type="triangle";o.frequency.value=[880,1175,1480][i];g.gain.setValueAtTime(.0001,t+d);g.gain.exponentialRampToValueAtTime(.5,t+d+.02);g.gain.exponentialRampToValueAtTime(.0001,t+d+.2);o.connect(g).connect(actx.destination);o.start(t+d);o.stop(t+d+.22)})}catch(e){}}
+function alertNew(o){beep();try{navigator.vibrate&&navigator.vibrate([200,100,200])}catch(e){}
+  toast(`Novo pedido #${o.id} · ${o.customer_name}`);if(tab!=="pedidos"){unseen++;badge()}
+  document.title=`(${D.orders.filter(x=>x.status==="novo").length}) Painel Fantasminha`}
+function badge(){const b=$("#newBadge");b.textContent=unseen;b.hidden=!unseen}
+const hhmm=d=>new Date(d).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
+function renderOrders(){
+  const open=D.orders.filter(o=>!["concluido","cancelado"].includes(o.status)), closed=D.orders.filter(o=>["concluido","cancelado"].includes(o.status));
+  const tot=D.orders.filter(o=>o.status!=="cancelado").reduce((a,o)=>a+ +o.total,0);
+  document.title=`${open.filter(o=>o.status==="novo").length?`(${open.filter(o=>o.status==="novo").length}) `:""}Painel Fantasminha`;
+  $("#main").innerHTML=`<section class="cat"><div class="cat-h"><h2>Pedidos de hoje</h2>
+    <button class="${soundOn?"ghost":"btn"}" type="button" id="snd">${soundOn?"🔔 Som ligado":"Ligar som de alerta"}</button></div>
+    <p class="hint">${D.orders.length} pedido(s) hoje · ${BRL(tot)} · os novos aparecem sozinhos, sem atualizar a página.</p>
+    <div class="olist">${open.map(card).join("")||'<p class="empty">Nenhum pedido em aberto agora.</p>'}</div>
+    ${closed.length?`<h2 style="font-size:22px;margin-top:18px;color:var(--muted)">Finalizados</h2><div class="olist">${closed.map(card).join("")}</div>`:""}</section>`;
+  $("#snd").onclick=()=>{soundOn=!soundOn;if(soundOn){actx=actx||new AudioContext();actx.resume();beep()}renderOrders()};
+}
+function card(o){
+  const s=ST[o.status], nx=NEXT[o.status], tel=String(o.phone).replace(/\D/g,"");
+  return `<article class="ord st-${o.status}"><header><b>#${o.id}</b><span class="pill" style="--c:${s[1]}">${s[0]}</span><span class="when">${hhmm(o.created_at)}</span></header>
+  <div class="who"><b>${esc(o.customer_name)}</b> · <a href="https://wa.me/55${tel}" target="_blank" rel="noopener">${esc(o.phone)}</a>${o.cpf?` · CPF ${esc(o.cpf)}`:""}</div>
+  <div class="addr">${o.mode==="entrega"?`🛵 <b>${esc(o.street)}, ${esc(o.number)}</b> · ${esc(o.district)} · ${esc(o.region)}${o.complement?`<br><span>${esc(o.complement)}</span>`:""}`:"🏃 <b>Retirada no balcão</b>"}</div>
+  <ul class="its">${o.items.map(it=>`<li><b>${it.qty}x ${it.number?it.number+". ":""}${esc(it.name)}</b>${it.size?` (${SZ[it.size]||it.size})`:""}${it.option?` · ${esc(it.option)}`:""}
+    ${it.addons.map(a=>`<div class="sub">+ ${a.qty}x ${esc(a.name)}</div>`).join("")}${it.obs?`<div class="obs">Obs: ${esc(it.obs)}</div>`:""}</li>`).join("")}</ul>
+  <div class="foot2"><span>${esc(o.payment)}${o.change_for?` · troco p/ R$ ${esc(o.change_for)}`:""}</span><b>${BRL(o.total)}</b></div>
+  ${nx||o.status==="novo"||o.status==="preparo"?`<div class="acts2">${nx?`<button class="btn" type="button" data-st="${o.id}" data-to="${nx[0]}">${nx[1]}</button>`:""}${["novo","preparo"].includes(o.status)?`<button class="ghost" type="button" data-st="${o.id}" data-to="cancelado">Cancelar</button>`:""}</div>`:""}
+  </article>`}
+$("#main").addEventListener("click",async e=>{const b=e.target.closest("[data-st]");if(!b)return;
+  if(b.dataset.to==="cancelado"&&b.dataset.sure!=="1"){b.dataset.sure="1";b.textContent="Toque de novo pra cancelar";setTimeout(()=>{if(b.isConnected){b.dataset.sure="";b.textContent="Cancelar"}},3000);return}
+  b.disabled=true;const {error}=await sb.from("orders").update({status:b.dataset.to}).eq("id",b.dataset.st);
+  if(error){b.disabled=false;return fail(error)}const o=D.orders.find(x=>x.id==b.dataset.st);o.status=b.dataset.to;renderOrders()});
+
+/* ---------- loja ---------- */
+function renderLoja(){
+  const w=D.settings.whatsapp||"";
+  $("#main").innerHTML=`<section class="cat"><div class="cat-h"><h2>Loja</h2></div>
+  <div class="f"><label for="wa">WhatsApp que recebe os pedidos</label><input id="wa" inputmode="tel" value="${esc(w)}" placeholder="5531999999999">
+  <p class="hint">Com 55 e o DDD, só números. Ex: 5531973066832</p></div>
+  <button class="btn" type="button" id="saveWa">Salvar</button></section>`;
+  $("#saveWa").onclick=async()=>{const v=$("#wa").value.replace(/\D/g,"");if(v.length<12)return toast("Número inválido. Use 55 + DDD + número",true);
+    const {error}=await sb.from("settings").upsert({key:"whatsapp",value:v});if(error)return fail(error);D.settings.whatsapp=v;toast("WhatsApp salvo")}
+}
 
 function priceLabel(it){return it.sizes&&it.sizes.length?it.sizes.map(s=>`${s.label} ${money(s.price)}`).join(" · "):BRL(it.price)}
 function renderItems(){
