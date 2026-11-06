@@ -289,6 +289,10 @@ function listenOrders(){if(chan)return;
     if(tab==="pedidos")renderOrders();
   }).subscribe()}
 let actx;
+let wl=null;
+async function keepAwake(){try{if("wakeLock" in navigator&&!wl){wl=await navigator.wakeLock.request("screen");wl.addEventListener("release",()=>{wl=null})}}catch(e){}}
+function releaseAwake(){try{wl&&wl.release()}catch(e){}wl=null}
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&soundOn){keepAwake();if(actx)actx.resume()}});
 let ringAt=0;
 function beep(){if(!soundOn)return 0;try{actx=actx||new AudioContext();const t0=Math.max(actx.currentTime+.05,ringAt);ringAt=t0+4.3;const delay=(t0-actx.currentTime)*1000;
   // campainha de ~4s: 3 rodadas de "ding-dong-ding"
@@ -316,13 +320,14 @@ function renderOrders(){
   if(q)list=list.filter(o=>String(o.id).includes(q)||o.customer_name.toLowerCase().includes(q)||String(o.phone).replace(/\D/g,"").includes(q.replace(/\D/g,"")||"§"));
   $("#main").innerHTML=`<section class="cat"><div class="cat-h"><h2>Pedidos de hoje</h2>
     <button class="${soundOn?"ghost":"btn"}" type="button" id="snd">${soundOn?"🔔 Som ligado":"Ligar som de alerta"}</button></div>
+    ${soundOn?`<p class="hint">📱 A tela vai ficar <b>sempre ligada</b> enquanto o som estiver ativo, pra não perder pedido. Deixe o aparelho no carregador.</p>`:""}
     <p class="hint">${D.orders.length} pedido(s) hoje · ${BRL(tot)} · os novos aparecem sozinhos, sem atualizar a página.</p>
     <div class="ofil">${F.map(([k,l,n])=>`<button type="button" class="chip${OF===k?" on":""}${k==="novo"&&n?" hot":""}" data-of="${k}">${l} <span>${n}</span></button>`).join("")}</div>
     <input id="oq" type="search" placeholder="Buscar por nº, nome ou telefone" value="${esc(OQ)}" aria-label="Buscar pedido">
     <div class="olist">${list.map(card).join("")||`<p class="empty">${q?"Nenhum pedido encontrado.":"Nenhum pedido aqui."}</p>`}</div></section>`;
   $("#main").querySelectorAll("[data-of]").forEach(b=>b.onclick=()=>{OF=b.dataset.of;renderOrders()});
   const qi=$("#oq");qi.oninput=()=>{OQ=qi.value;const pos=qi.selectionStart;renderOrders();const n=$("#oq");n.focus();n.setSelectionRange(pos,pos)};
-  $("#snd").onclick=()=>{soundOn=!soundOn;if(soundOn){actx=actx||new AudioContext();actx.resume();beep()}renderOrders()};
+  $("#snd").onclick=()=>{soundOn=!soundOn;if(soundOn){actx=actx||new AudioContext();actx.resume();beep();keepAwake()}else releaseAwake();renderOrders()};
 }
 function card(o){
   const s=ST[o.status], nx=NEXT[o.status], tel=String(o.phone).replace(/\D/g,"");
