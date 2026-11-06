@@ -175,6 +175,13 @@ input.bad{border-color:#ff8f7a;box-shadow:0 0 0 1px #ff8f7a}
 .primary.wa{background:#25d366;color:#06240f;font-size:17px;padding:17px 18px;animation:waPulse 1.6s ease-in-out infinite}
 @keyframes waPulse{0%,100%{box-shadow:0 0 0 0 rgba(37,211,102,.5)}50%{box-shadow:0 0 0 10px rgba(37,211,102,0)}}
 @media (prefers-reduced-motion:reduce){.primary.wa{animation:none}}
+.pix{width:100%;background:var(--surface2);border:1px solid #32bcad;border-radius:12px;padding:12px 14px;display:grid;gap:8px;text-align:left}
+.pix-h{display:flex;justify-content:space-between;align-items:center;gap:10px}.pix-h span{font-weight:800;font-size:18px;font-variant-numeric:tabular-nums}
+.pix-k{display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--surface);border-radius:10px;padding:10px 12px}
+.pix-k>div{display:grid;gap:1px;min-width:0}.pix-k small{color:var(--muted);font-size:12px}.pix-v{font-size:19px;white-space:nowrap;letter-spacing:.02em;font-variant-numeric:tabular-nums}
+.pix-c{flex:none;background:#32bcad;color:#04221f;border:0;border-radius:10px;padding:10px 12px;font-weight:800;font-size:14px}
+.pix-n{margin:0;color:var(--muted);font-size:13px}
+.pix.big{border-width:2px}
 .laststep{background:var(--surface2);border:1px solid var(--accent);border-radius:12px;padding:12px 14px;text-align:left;width:100%}
 .hint2{font-size:13px;margin-top:-6px!important}
 .ticketcap{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
@@ -213,6 +220,7 @@ let ADD=[],CATS=[],FEES=[];
 const $=s=>document.querySelector(s);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const nº=o=>String(o.day_no??o.id).padStart(2,"0");
+let PIX={key:"31987455754",name:"Fernanda Figueiredo da Silva"};
 let cart=[], WA="", sending=false, HOURS=null, STATUS="auto";
 const DIAS=["domingo","segunda","terça","quarta","quinta","sexta","sábado"];
 function spNow(){const f=new Intl.DateTimeFormat("en-US",{timeZone:"America/Sao_Paulo",weekday:"short",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).formatToParts(new Date());
@@ -230,6 +238,14 @@ function openInfo(){
     return {open:false,msg:`Fechado · abre ${k===0?"hoje":k===1?"amanhã":DIAS[(dow+k)%7]} às ${hfmt(d.open)}`}}
   return {open:false,msg:"Fechado no momento"};
 }
+function pixFmt(k){const d=String(k).replace(/\D/g,"");return d.length===11?`(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7)}`:k}
+function pixBox(total,big){if(!PIX.key)return "";return `<div class="pix${big?" big":""}"><div class="pix-h">💠 <b>Pague com Pix</b>${total!=null?`<span>${BRL(total)}</span>`:""}</div>
+  <div class="pix-k"><div><small>Chave Pix (celular)</small><b class="pix-v">${esc(pixFmt(PIX.key))}</b><small>${esc(PIX.name)}</small></div>
+  <button type="button" class="pix-c" data-pixcopy="${esc(String(PIX.key).replace(/\D/g,"")||PIX.key)}">Copiar chave</button></div>
+  <p class="pix-n">${big?"Depois de pagar, envie o comprovante no nosso WhatsApp.":"Você paga agora pelo app do seu banco. A chave também aparece depois de enviar o pedido."}</p></div>`}
+document.addEventListener("click",async e=>{const b=e.target.closest("[data-pixcopy]");if(!b)return;e.stopPropagation();const v=b.dataset.pixcopy;
+  try{await navigator.clipboard.writeText(v);b.textContent="Copiada ✓"}catch(err){const t=document.createElement("textarea");t.value=v;document.body.appendChild(t);t.select();try{document.execCommand("copy");b.textContent="Copiada ✓"}catch(e2){b.textContent=v}t.remove()}
+  setTimeout(()=>{if(b.isConnected)b.textContent="Copiar chave"},2500)},true);
 function helpLink(){const n=WA||"5531973066832";const u=`https://api.whatsapp.com/send?phone=${n}&text=${encodeURIComponent("Olá, Fantasminha Lanches! 👻 Tenho uma dúvida:")}`;
   const ph=n.replace(/^55/,"").replace(/^(\d\d)(\d)(\d{4})(\d{4})$/,"($1) $2 $3-$4");
   [$("#helpBtn"),$("#helpBox")].forEach(a=>{if(a){a.href=u;a.hidden=false}});const sp=$("#helpBox span");if(sp)sp.textContent=`Fale com a gente no WhatsApp · ${ph}`}
@@ -313,6 +329,7 @@ function checkout(err){
   ${fld("ck-bai","Bairro",ck.bai,'placeholder="Seu bairro"')}
   ${fld("ck-comp","Complemento ou referência (opcional)",ck.comp,'placeholder="Ex: casa de muro azul, apto 2"')}`:""}
   <div class="grp"><span class="lbl">Pagamento</span><div class="seg">${["Pix","Cartão","Dinheiro"].map(p=>`<button type="button" data-a="pay" data-v="${p}" class="${ck.pay===p?"on":""}">${p}</button>`).join("")}</div></div>
+  ${ck.pay==="Pix"?pixBox(null,false):""}
   ${ck.pay==="Dinheiro"?`<div class="grp"><label for="ck-troco">Troco para quanto?</label><input id="ck-troco" value="${esc(ck.troco)}" inputmode="decimal" placeholder="Ex: 100"></div>`:""}
   <div class="tot"><div><span>Subtotal</span><span>${BRL(s)}</span></div>${ck.mode==="entrega"?`<div><span>Entrega</span><span>${BRL(fee)}</span></div>`:""}<div class="big"><span>Total</span><span>${BRL(s+fee)}</span></div></div>
   ${err?`<p class="err">${err}</p>`:""}
@@ -366,6 +383,7 @@ function done(o){
   const url=WA?`https://api.whatsapp.com/send?phone=${WA}&text=${encodeURIComponent(waText(o))}`:"";
   open(`<div class="sh-head"><div></div><button class="x" type="button" data-a="x" aria-label="Fechar">×</button></div>
   <div class="done">${$(".logo")?`<img class="done-logo" src="${$(".logo").src}" alt="" width="170" height="133">`:""}<h3>Pedido #${nº(o)} recebido!</h3>
+  ${ck.pay==="Pix"?pixBox(+o.total,true):""}
   ${url?`<div class="laststep"><b>Falta só 1 passo:</b> envie o pedido no nosso WhatsApp pra gente confirmar com você. 👇</div>
   <a class="primary wa" id="waBtn" href="${url}" target="_blank" rel="noopener" style="width:100%;text-decoration:none"><span>Enviar pedido no WhatsApp</span><span>${BRL(+o.total)}</span></a>
   <p class="hint2">Ao abrir o WhatsApp, é só tocar em <b>enviar ➤</b>.</p>`:`<p>Seu pedido já chegou na cozinha.</p>`}
@@ -380,7 +398,7 @@ function done(o){
 async function loadMenu(){
   $("#menu").innerHTML='<div class="state">Carregando cardápio…</div>';
   try{
-    sb.from("settings").select("key,value").then(r=>{(r.data||[]).forEach(x=>{if(x.key==="whatsapp")WA=digits(x.value);if(x.key==="status")STATUS=x.value;if(x.key==="hours")try{HOURS=JSON.parse(x.value)}catch(e){}});paintOpen();renderHours()});
+    sb.from("settings").select("key,value").then(r=>{(r.data||[]).forEach(x=>{if(x.key==="whatsapp")WA=digits(x.value);if(x.key==="pix_key")PIX.key=x.value;if(x.key==="pix_name")PIX.name=x.value;if(x.key==="status")STATUS=x.value;if(x.key==="hours")try{HOURS=JSON.parse(x.value)}catch(e){}});paintOpen();renderHours()});
     const [c,i,a,f]=await Promise.all([
       sb.from("categories").select("*").order("sort"),
       sb.from("items").select("*").order("sort"),

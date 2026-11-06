@@ -274,6 +274,7 @@ function custMsg(o,to){
   L.push("");
   if(+o.delivery_fee)L.push(`Subtotal: ${BRL(o.subtotal)}`,`Entrega: ${BRL(o.delivery_fee)}`);
   L.push(`💰 *Total: ${BRL(o.total)}*`,`💳 Pagamento: ${o.payment}${o.change_for?` (troco para R$ ${o.change_for})`:""}`);
+  if(o.payment==="Pix"&&D.settings.pix_key&&(to==="preparo"||to==="saiu"))L.push(`💠 Pix (celular): ${D.settings.pix_key}${D.settings.pix_name?` · ${D.settings.pix_name}`:""}`,"_Se ainda não pagou, envie o comprovante por aqui._");
   L.push(o.mode==="entrega"?`📍 Entrega: ${o.street}, ${o.number} · ${o.district}${o.complement?` (${o.complement})`:""}`:"📍 Retirada no balcão");
   L.push("",({preparo:"Qualquer dúvida, é só chamar por aqui! 👻🍔",
     saiu:o.mode==="entrega"?"Bom apetite! 👻🍔":"Te esperamos! 👻🍔",
@@ -442,6 +443,10 @@ function renderLoja(){
     <div class="f"><label for="cmbPhone">Celular que recebe o aviso</label><input id="cmbPhone" inputmode="tel" value="${esc(D.priv.callmebot_phone||"")}" placeholder="5531999999999"></div>
     <div class="f"><label for="cmbKey">Chave (apikey) do CallMeBot</label><input id="cmbKey" inputmode="numeric" autocomplete="off" value="" placeholder="${D.priv.callmebot_key?"Chave salva ✓ (digite só pra trocar)":"Número que o CallMeBot mandou"}"></div>
     <div class="acts2"><button class="btn" type="button" id="saveCmb">Salvar aviso</button>${D.priv.callmebot_key?`<button class="ghost" type="button" id="offCmb">Desligar</button>`:""}</div></div>
+  <div class="panel"><div class="ph"><h3>Pix</h3></div><p class="hint">Aparece pro cliente quando ele escolhe pagar com Pix.</p>
+    <div class="f"><label for="pixKey">Chave Pix</label><input id="pixKey" value="${esc(D.settings.pix_key||"")}" placeholder="Celular, CPF, e-mail ou chave aleatória"></div>
+    <div class="f"><label for="pixName">Nome que aparece no banco</label><input id="pixName" value="${esc(D.settings.pix_name||"")}"></div>
+    <button class="btn" type="button" id="savePix">Salvar Pix</button></div>
   <div class="panel"><div class="f"><label for="wa">WhatsApp que recebe os pedidos</label><input id="wa" inputmode="tel" value="${esc(w)}" placeholder="5531999999999">
     <p class="hint">Com 55 e o DDD, só números. Ex: 5531973066832</p></div>
     <button class="btn" type="button" id="saveWa">Salvar WhatsApp</button></div></section>`;
@@ -458,6 +463,8 @@ function renderLoja(){
     if(!(await setP("callmebot_phone",ph)))return; if(k&&!(await setP("callmebot_key",k)))return;
     toast("Aviso no WhatsApp ligado");renderLoja()};
   if($("#offCmb"))$("#offCmb").onclick=async()=>{if(await setP("callmebot_key",null)){toast("Aviso desligado");renderLoja()}};
+  $("#savePix").onclick=async()=>{const k=$("#pixKey").value.trim(),n=$("#pixName").value.trim();if(!k)return toast("Coloque a chave Pix",true);
+    if(await setS("pix_key",k)&&await setS("pix_name",n))toast("Pix salvo")};
   $("#saveWa").onclick=async()=>{const v=$("#wa").value.replace(/\D/g,"");if(v.length<12)return toast("Número inválido. Use 55 + DDD + número",true);
     if(await setS("whatsapp",v))toast("WhatsApp salvo")};
 }
