@@ -145,6 +145,8 @@ input.bad{border-color:#ff8f7a;box-shadow:0 0 0 1px #ff8f7a}
 .ghost{background:none;border:1px solid var(--line);border-radius:12px;padding:12px;font-weight:600;color:var(--fg);text-align:center;text-decoration:none}
 .cl{display:grid;gap:0}
 .cl .ln{display:grid;grid-template-columns:1fr auto;gap:2px 12px;padding:10px 0;border-bottom:1px solid var(--line)}
+.lq{display:flex;gap:8px;align-items:baseline;min-width:0}.lq small{color:var(--muted);font-weight:500;font-size:12px}
+.qb{flex:none;background:var(--accent);color:var(--accent-ink);border-radius:6px;padding:0 6px;font-size:14px;font-variant-numeric:tabular-nums}
 .cl .ln p{margin:0;color:var(--muted);font-size:13px;min-width:0}
 .cl .ln .rm{grid-column:2;justify-self:end;background:none;border:0;color:var(--muted);font-size:13px;text-decoration:underline;padding:0}
 .tot{display:grid;gap:4px;font-variant-numeric:tabular-nums}
@@ -238,7 +240,7 @@ function openItem(k){
       if(a==="size")st.size=i; if(a==="choice")st.choice=i;
       if(a==="add")st.adds[i]=(st.adds[i]||0)+1; if(a==="sub"&&st.adds[i]){st.adds[i]--; if(!st.adds[i])delete st.adds[i]}
       if(a==="q+")st.qty++; if(a==="q-"&&st.qty>1)st.qty--;
-      if(a==="ok"){cart.push({item_id:it.id,nm:(it.no?it.no+". ":"")+it.nm,size:it.sizes?it.sizes[st.size][0]:null,choice:it.choice?it.choice[st.choice]:null,adds:Object.entries(st.adds).map(([i,q])=>({id:ADD[i][2],nm:ADD[i][0],q,v:ADD[i][1]})),obs:st.obs.trim(),qty:st.qty,unit:base+addT});close();updBar();window.buddyHop&&buddyHop();return}
+      if(a==="ok"){cart.push({item_id:it.id,no:it.no,nm:it.nm,size:it.sizes?it.sizes[st.size][0]:null,choice:it.choice?it.choice[st.choice]:null,adds:Object.entries(st.adds).map(([i,q])=>({id:ADD[i][2],nm:ADD[i][0],q,v:ADD[i][1]})),obs:st.obs.trim(),qty:st.qty,unit:base+addT});close();updBar();window.buddyHop&&buddyHop();return}
       draw();$(".sheet").scrollTop=keep};
   };
   draw();
@@ -259,7 +261,7 @@ function lineDesc(l){return [l.size&&({P:"Pequeno",M:"Médio",G:"Grande"}[l.size
 function checkout(err){
   const fee=ck.mode==="entrega"?FEES[ck.bairro][1]:0, s=sub();
   open(`<div class="sh-head"><div><h3>Seu pedido</h3></div><button class="x" type="button" data-a="x" aria-label="Fechar">×</button></div>
-  <div class="cl">${cart.map((l,i)=>`<div class="ln"><strong>${l.qty}x ${l.nm}</strong><span>${BRL(l.unit*l.qty)}</span>${lineDesc(l)?`<p>${esc(lineDesc(l))}</p>`:"<p></p>"}<button class="rm" type="button" data-a="rm" data-i="${i}">remover</button></div>`).join("")}</div>
+  <div class="cl">${cart.map((l,i)=>`<div class="ln"><strong class="lq"><span class="qb">${l.qty}x</span><span>${esc(l.nm)}${l.no?` <small>nº ${l.no}</small>`:""}</span></strong><span>${BRL(l.unit*l.qty)}</span>${lineDesc(l)?`<p>${esc(lineDesc(l))}</p>`:"<p></p>"}<button class="rm" type="button" data-a="rm" data-i="${i}">remover</button></div>`).join("")}</div>
   ${fld("ck-name","Seu nome",ck.name,'autocomplete="name"')}
   <div class="row2">${fld("ck-phone","WhatsApp",ck.phone,'inputmode="tel" autocomplete="tel" placeholder="(31) 9 0000-0000"')}
   ${fld("ck-cpf","CPF",ck.cpf,'inputmode="numeric" placeholder="000.000.000-00"')}</div>
@@ -308,7 +310,7 @@ async function send(fee){
 }
 function waText(o){
   const L=[`*Pedido #${o.id} · Fantasminha Lanches*`,""];
-  o.items.forEach(it=>{L.push(`*${it.qty}x ${it.number?it.number+". ":""}${it.name}*${it.size?` (${({P:"Pequeno",M:"Médio",G:"Grande"})[it.size]})`:""} · ${BRL(+it.total)}`);
+  o.items.forEach(it=>{L.push(`*${it.qty}x ${it.name}*${it.number?` (nº ${it.number})`:""}${it.size?` (${({P:"Pequeno",M:"Médio",G:"Grande"})[it.size]})`:""} · ${BRL(+it.total)}`);
     if(it.option)L.push(`   > ${it.option}`);it.addons.forEach(a=>L.push(`   + ${a.qty}x ${a.name}`));if(it.obs)L.push(`   Obs: ${it.obs}`)});
   L.push("",`Subtotal: ${BRL(+o.subtotal)}`);
   if(ck.mode==="entrega")L.push(`Entrega (${o.region}): ${BRL(+o.fee)}`);

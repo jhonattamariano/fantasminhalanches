@@ -117,7 +117,12 @@ main{padding-block:8px 80px}
 .who a{color:var(--accent)}
 .addr span{color:var(--muted)}
 .its{list-style:none;margin:0;padding:10px 0;border-block:1px dashed var(--line);display:grid;gap:8px}
-.its .sub{color:var(--muted);font-size:14px;padding-left:14px}
+.iln{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:start}
+.qb{background:var(--accent);color:var(--accent-ink);font-weight:800;font-size:18px;border-radius:8px;padding:2px 8px;min-width:40px;text-align:center;font-variant-numeric:tabular-nums}
+.iln b{font-size:17px}.tag{display:inline-block;border:1px solid var(--line);border-radius:6px;padding:0 6px;font-size:13px;margin-left:4px;color:var(--fg)}
+.inum{color:var(--muted);margin-left:6px}
+.its li+li{padding-top:8px;border-top:1px solid var(--line)}
+.its .sub{color:var(--muted);font-size:14px}
 .its .obs{display:inline-block;margin-top:3px;background:var(--fg);color:var(--bg);font-weight:700;padding:1px 6px;border-radius:4px;font-size:14px}
 .foot2{display:flex;justify-content:space-between;align-items:center;font-variant-numeric:tabular-nums}
 .foot2 b{font-size:20px}
@@ -285,8 +290,8 @@ function card(o){
   return `<article class="ord st-${o.status}"><header><b>#${o.id}</b><span class="pill" style="--c:${s[1]}">${s[0]}</span><span class="when">${hhmm(o.created_at)}</span></header>
   <div class="who"><b>${esc(o.customer_name)}</b> · <a href="https://wa.me/55${tel}" target="_blank" rel="noopener">${esc(o.phone)}</a>${o.cpf?` · CPF ${esc(o.cpf)}`:""}</div>
   <div class="addr">${o.mode==="entrega"?`🛵 <b>${esc(o.street)}, ${esc(o.number)}</b> · ${esc(o.district)} · ${esc(o.region)}${o.complement?`<br><span>${esc(o.complement)}</span>`:""}`:"🏃 <b>Retirada no balcão</b>"}</div>
-  <ul class="its">${o.items.map(it=>`<li><b>${it.qty}x ${it.number?it.number+". ":""}${esc(it.name)}</b>${it.size?` (${SZ[it.size]||it.size})`:""}${it.option?` · ${esc(it.option)}`:""}
-    ${it.addons.map(a=>`<div class="sub">+ ${a.qty}x ${esc(a.name)}</div>`).join("")}${it.obs?`<div class="obs">Obs: ${esc(it.obs)}</div>`:""}</li>`).join("")}</ul>
+  <ul class="its">${o.items.map(it=>`<li><div class="iln"><span class="qb">${it.qty}x</span><div><b>${esc(it.name)}</b>${it.size?` <span class="tag">${SZ[it.size]||it.size}</span>`:""}${it.option?` <span class="tag">${esc(it.option)}</span>`:""}${it.number?` <small class="inum">nº ${it.number}</small>`:""}
+    ${it.addons.map(a=>`<div class="sub">+ ${a.qty}x ${esc(a.name)}</div>`).join("")}${it.obs?`<div class="obs">Obs: ${esc(it.obs)}</div>`:""}</div></div></li>`).join("")}</ul>
   ${o.status!=="novo"?`<a class="resend" href="${waCust(o,o.status)}" target="_blank" rel="noopener">Reenviar aviso de "${s[0]}" no WhatsApp</a>`:""}
   <div class="foot2"><span>${esc(o.payment)}${o.change_for?` · troco p/ R$ ${esc(o.change_for)}`:""}</span><b>${BRL(o.total)}</b></div>
   ${nx||o.status==="novo"||o.status==="preparo"?`<div class="acts2">${nx?`<a class="btn" href="${waCust(o,nx[0])}" target="_blank" rel="noopener" data-st="${o.id}" data-to="${nx[0]}">${nx[1]} <small>· avisa no WhatsApp</small></a>`:""}${["novo","preparo"].includes(o.status)?`<button class="ghost" type="button" data-st="${o.id}" data-to="cancelado">Cancelar</button>`:""}</div>`:""}
