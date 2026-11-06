@@ -211,18 +211,23 @@ function custMsg(o,to){
   const oi=h<12?"Bom dia":h<18?"Boa tarde":"Boa noite";
   const head={
     preparo:`${oi}, ${n}! 👻\nObrigado por pedir com a gente na *Fantasminha Lanches*! 🧡\n\nSeu pedido *#${o.id}* foi *confirmado* e já está sendo preparado. 🍔🔥`,
-    saiu:o.mode==="entrega"?`${oi}, ${n}! 👻\nSeu pedido *#${o.id}* acabou de *sair para entrega*! 🛵💨\nJá já chega quentinho aí.`:`${oi}, ${n}! 👻\nSeu pedido *#${o.id}* está *pronto para retirada*! 🍔\nPode vir buscar.`,
-    concluido:`${oi}, ${n}! 👻\nSeu pedido *#${o.id}* foi *concluído*.\nMuito obrigado por comprar com a *Fantasminha Lanches*! Esperamos que tenha gostado. 🧡`,
+    saiu:o.mode==="entrega"
+      ?`${oi}, ${n}! 👻🛵\nBoas notícias: seu pedido *#${o.id}* acabou de *sair para entrega*!\nNosso entregador já está a caminho e o seu lanche vai chegar quentinho. 🔥\n\n✅ Deixe o pagamento separado pra agilizar a entrega\n✅ Fique de olho no celular, se precisarmos a gente te chama por aqui`
+      :`${oi}, ${n}! 👻🍔\nSeu pedido *#${o.id}* está *prontinho* e esperando por você no balcão!\nÉ só chegar e informar o número *#${o.id}*. 😉`,
+    concluido:`${oi}, ${n}! 👻🧡\nSeu pedido *#${o.id}* foi *${o.mode==="entrega"?"entregue":"retirado"}* com sucesso.\n\nMuito obrigado por escolher a *Fantasminha Lanches*! Esperamos que tenha sido assombrosamente gostoso. 😋\n\n⭐ Se puder, conta pra gente o que achou. Sua opinião ajuda demais!`,
     cancelado:`${oi}, ${n}. 👻\nInfelizmente seu pedido *#${o.id}* foi *cancelado*.\nSe tiver qualquer dúvida, é só responder esta mensagem.`}[to];
   if(!head)return "";
-  const L=[head,"","🧾 *Seu pedido:*"];
+  const L=[head,"",to==="concluido"?"🧾 *Resumo do seu pedido:*":"🧾 *Seu pedido:*"];
   o.items.forEach(it=>{L.push(`• ${it.qty}x ${it.name}${it.size?` (${SZ[it.size]||it.size})`:""}${it.option?` · ${it.option}`:""} · ${BRL(it.total)}`);
     it.addons.forEach(a=>L.push(`   + ${a.qty}x ${a.name}`));if(it.obs)L.push(`   _Obs: ${it.obs}_`)});
   L.push("");
   if(+o.delivery_fee)L.push(`Subtotal: ${BRL(o.subtotal)}`,`Entrega: ${BRL(o.delivery_fee)}`);
   L.push(`💰 *Total: ${BRL(o.total)}*`,`💳 Pagamento: ${o.payment}${o.change_for?` (troco para R$ ${o.change_for})`:""}`);
   L.push(o.mode==="entrega"?`📍 Entrega: ${o.street}, ${o.number} · ${o.district}${o.complement?` (${o.complement})`:""}`:"📍 Retirada no balcão");
-  if(to!=="cancelado")L.push("","Qualquer dúvida, é só chamar por aqui! 👻🍔");
+  L.push("",({preparo:"Qualquer dúvida, é só chamar por aqui! 👻🍔",
+    saiu:o.mode==="entrega"?"Bom apetite! 👻🍔":"Te esperamos! 👻🍔",
+    concluido:`Bateu a fome de novo? Peça pelo nosso cardápio:\n👉 ${location.origin}\n\nAté a próxima! 👻🍔`,
+    cancelado:"Pedimos desculpas pelo transtorno. 👻"})[to]);
   return L.join("\n");
 }
 function openWa(url){let w=null;try{w=window.open(url,"_blank")}catch(e){}if(!w)location.href=url}
