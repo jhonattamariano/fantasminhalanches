@@ -244,6 +244,7 @@ async function load(){
   if(err){$("#main").innerHTML='<p class="empty">Não foi possível carregar. Atualize a página.</p>';return fail(err)}
   D={...D,cats:c.data,items:i.data,addons:a.data,fees:f.data};
   const st=await sb.from("settings").select("*");(st.data||[]).forEach(x=>D.settings[x.key]=x.value);
+  D.priv={};const pv=await sb.from("private_settings").select("*");(pv.data||[]).forEach(x=>D.priv[x.key]=x.value);
   await loadOrders();listenOrders();render();
 }
 document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{tab=b.dataset.tab;document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("on",x===b));render()});
@@ -411,6 +412,11 @@ function renderLoja(){
       <input type="time" data-hc="${i}" value="${d?d.close:"23:30"}" aria-label="Fecha às" ${d?"":"disabled"}></div>`}).join("")}</div>
     <p class="hint">Use 00:00 pra fechar à meia-noite. Se o horário de fechar for antes do de abrir, ele entende que passa da meia-noite.</p>
     <button class="btn" type="button" id="saveH">Salvar horário</button></div>
+  <div class="panel"><div class="ph"><h3>Aviso no WhatsApp</h3><span class="pill" style="--c:${D.priv.callmebot_key?"#5fd38a":"#b3a794"}">${D.priv.callmebot_key?"Ligado":"Desligado"}</span></div>
+    <p class="hint">Cada pedido novo chega como mensagem no WhatsApp abaixo, mesmo com o celular bloqueado. Usa o CallMeBot (grátis).</p>
+    <div class="f"><label for="cmbPhone">Celular que recebe o aviso</label><input id="cmbPhone" inputmode="tel" value="${esc(D.priv.callmebot_phone||"")}" placeholder="5531999999999"></div>
+    <div class="f"><label for="cmbKey">Chave (apikey) do CallMeBot</label><input id="cmbKey" inputmode="numeric" autocomplete="off" value="" placeholder="${D.priv.callmebot_key?"Chave salva ✓ (digite só pra trocar)":"Número que o CallMeBot mandou"}"></div>
+    <div class="acts2"><button class="btn" type="button" id="saveCmb">Salvar aviso</button>${D.priv.callmebot_key?`<button class="ghost" type="button" id="offCmb">Desligar</button>`:""}</div></div>
   <div class="panel"><div class="f"><label for="wa">WhatsApp que recebe os pedidos</label><input id="wa" inputmode="tel" value="${esc(w)}" placeholder="5531999999999">
     <p class="hint">Com 55 e o DDD, só números. Ex: 5531973066832</p></div>
     <button class="btn" type="button" id="saveWa">Salvar WhatsApp</button></div></section>`;
@@ -420,6 +426,13 @@ function renderLoja(){
   $("#saveH").onclick=async()=>{const out={};for(let i=0;i<7;i++){const on=$(`[data-hd="${i}"]`).checked,o=$(`[data-ho="${i}"]`).value,c=$(`[data-hc="${i}"]`).value;
       if(on&&(!o||!c))return toast(`Preencha o horário de ${DN[i]}`,true);if(on&&o===c)return toast(`${DN[i]}: abrir e fechar não podem ser iguais`,true);out[i]=on?{open:o,close:c}:null}
     if(await setS("hours",JSON.stringify(out)))toast("Horário salvo")};
+  const setP=async(k,v)=>{const {error}=v===null?await sb.from("private_settings").delete().eq("key",k):await sb.from("private_settings").upsert({key:k,value:v});if(error){fail(error);return false}if(v===null)delete D.priv[k];else D.priv[k]=v;return true};
+  $("#saveCmb").onclick=async()=>{const ph=$("#cmbPhone").value.replace(/\D/g,""),k=$("#cmbKey").value.trim();
+    if(ph.length<12)return toast("Celular inválido. Use 55 + DDD + número",true);
+    if(!k&&!D.priv.callmebot_key)return toast("Cole a chave que o CallMeBot mandou",true);
+    if(!(await setP("callmebot_phone",ph)))return; if(k&&!(await setP("callmebot_key",k)))return;
+    toast("Aviso no WhatsApp ligado");renderLoja()};
+  if($("#offCmb"))$("#offCmb").onclick=async()=>{if(await setP("callmebot_key",null)){toast("Aviso desligado");renderLoja()}};
   $("#saveWa").onclick=async()=>{const v=$("#wa").value.replace(/\D/g,"");if(v.length<12)return toast("Número inválido. Use 55 + DDD + número",true);
     if(await setS("whatsapp",v))toast("WhatsApp salvo")};
 }
