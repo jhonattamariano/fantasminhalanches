@@ -104,6 +104,11 @@ main{padding-block:8px 16px}
 
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:30;background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:999px;font-weight:600;font-size:14px;box-shadow:0 8px 24px rgba(0,0,0,.5)}
 .toast.bad{background:var(--bad)}
+#newBanner{position:fixed;left:50%;top:calc(12px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:40;width:min(94vw,520px);background:var(--accent);color:var(--accent-ink);border:0;border-radius:14px;padding:14px 16px;font-size:16px;text-align:left;box-shadow:0 12px 30px rgba(0,0,0,.55);display:grid;gap:2px}
+#newBanner span{opacity:.8}#newBanner small{font-weight:600;opacity:.75}
+#newBanner.ring{animation:ring .6s ease-in-out 5}
+@keyframes ring{0%,100%{transform:translateX(-50%) rotate(0)}25%{transform:translateX(-50%) rotate(-1.5deg)}75%{transform:translateX(-50%) rotate(1.5deg)}}
+@media (prefers-reduced-motion:reduce){#newBanner.ring{animation:none}}
 .empty{color:var(--muted);padding-block:30px;text-align:center}
 .nb{display:inline-grid;place-items:center;min-width:20px;height:20px;border-radius:999px;background:var(--bad);color:#1a0703;font-size:12px;margin-left:4px;padding:0 5px}
 .olist{display:grid;gap:10px;padding-top:6px}
@@ -206,6 +211,10 @@ const num=v=>{const n=parseFloat(String(v).replace(/\s|R\$/g,"").replace(",","."
 const money=v=>v==null?"":Number(v).toFixed(2).replace(".",",");
 let D={cats:[],items:[],addons:[],fees:[],orders:[],settings:{}}, tab="pedidos", soundOn=false, unseen=0;
 
+let bt;function showBanner(o){let b=$("#newBanner");if(!b){b=document.createElement("button");b.id="newBanner";b.type="button";document.body.appendChild(b);
+    b.onclick=()=>{b.hidden=true;if(tab!=="pedidos")document.querySelector('[data-tab="pedidos"]').click();OF="novo";renderOrders()}}
+  const n=D.orders.filter(x=>x.status==="novo").length;b.innerHTML=`🔔 <b>Novo pedido #${o.id}</b> · ${esc(o.customer_name)} · ${BRL(o.total)}${n>1?` <span>(${n} novos)</span>`:""}<small>Toque para ver</small>`;
+  b.hidden=false;b.classList.remove("ring");void b.offsetWidth;b.classList.add("ring");clearTimeout(bt);bt=setTimeout(()=>b.hidden=true,15000)}
 let tt; function toast(msg,bad){const t=$("#toast");t.textContent=msg;t.classList.toggle("bad",!!bad);t.hidden=false;clearTimeout(tt);tt=setTimeout(()=>t.hidden=true,bad?4000:1800)}
 function fail(e){console.error(e);toast(e?.message?.includes("row-level")?"Sem permissão. Confira se seu e-mail está na lista de admins.":"Não salvou: "+(e?.message||"erro"),true)}
 
@@ -280,8 +289,17 @@ function listenOrders(){if(chan)return;
     if(tab==="pedidos")renderOrders();
   }).subscribe()}
 let actx;
-function beep(){if(!soundOn)return;try{actx=actx||new AudioContext();const t=actx.currentTime;[0,.22,.44].forEach((d,i)=>{const o=actx.createOscillator(),g=actx.createGain();o.type="triangle";o.frequency.value=[880,1175,1480][i];g.gain.setValueAtTime(.0001,t+d);g.gain.exponentialRampToValueAtTime(.5,t+d+.02);g.gain.exponentialRampToValueAtTime(.0001,t+d+.2);o.connect(g).connect(actx.destination);o.start(t+d);o.stop(t+d+.22)})}catch(e){}}
-function alertNew(o){beep();try{navigator.vibrate&&navigator.vibrate([200,100,200])}catch(e){}
+let ringAt=0;
+function beep(){if(!soundOn)return 0;try{actx=actx||new AudioContext();const t0=Math.max(actx.currentTime+.05,ringAt);ringAt=t0+4.3;const delay=(t0-actx.currentTime)*1000;
+  // campainha de ~4s: 3 rodadas de "ding-dong-ding"
+  for(let r=0;r<3;r++){[[0,880],[.25,1175],[.5,1480],[.85,1175]].forEach(([d,f])=>{const at=t0+r*1.35+d,o=actx.createOscillator(),g=actx.createGain();
+    o.type="triangle";o.frequency.value=f;g.gain.setValueAtTime(.0001,at);g.gain.exponentialRampToValueAtTime(.6,at+.02);g.gain.exponentialRampToValueAtTime(.0001,at+.45);
+    o.connect(g).connect(actx.destination);o.start(at);o.stop(at+.5)})}return delay}catch(e){return 0}}
+let vibAt=0;
+function alertNew(o){beep();
+  // cada pedido tem sua própria campainha e vibração, uma depois da outra
+  const now=Date.now(), at=Math.max(now,vibAt); vibAt=at+4300;
+  setTimeout(()=>{try{navigator.vibrate&&navigator.vibrate([400,150,400,150,400,150,600])}catch(e){}showBanner(o)},at-now);
   toast(`Novo pedido #${o.id} · ${o.customer_name}`);if(tab!=="pedidos"){unseen++;badge()}
   document.title=`(${D.orders.filter(x=>x.status==="novo").length}) Painel Fantasminha`}
 function badge(){const b=$("#newBadge");b.textContent=unseen;b.hidden=!unseen}
