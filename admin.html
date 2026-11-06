@@ -215,7 +215,7 @@ let D={cats:[],items:[],addons:[],fees:[],orders:[],settings:{}}, tab="pedidos",
 
 let bt;function showBanner(o){let b=$("#newBanner");if(!b){b=document.createElement("button");b.id="newBanner";b.type="button";document.body.appendChild(b);
     b.onclick=()=>{b.hidden=true;if(tab!=="pedidos")document.querySelector('[data-tab="pedidos"]').click();OF="novo";renderOrders()}}
-  const n=D.orders.filter(x=>x.status==="novo").length;b.innerHTML=`🔔 <b>Novo pedido #${o.id}</b> · ${esc(o.customer_name)} · ${BRL(o.total)}${n>1?` <span>(${n} novos)</span>`:""}<small>Toque para ver</small>`;
+  const n=D.orders.filter(x=>x.status==="novo").length;b.innerHTML=`🔔 <b>Novo pedido #${nº(o)}</b> · ${esc(o.customer_name)} · ${BRL(o.total)}${n>1?` <span>(${n} novos)</span>`:""}<small>Toque para ver</small>`;
   b.hidden=false;b.classList.remove("ring");void b.offsetWidth;b.classList.add("ring");clearTimeout(bt);bt=setTimeout(()=>b.hidden=true,15000)}
 let tt; function toast(msg,bad){const t=$("#toast");t.textContent=msg;t.classList.toggle("bad",!!bad);t.hidden=false;clearTimeout(tt);tt=setTimeout(()=>t.hidden=true,bad?4000:1800)}
 function fail(e){console.error(e);toast(e?.message?.includes("row-level")?"Sem permissão. Confira se seu e-mail está na lista de admins.":"Não salvou: "+(e?.message||"erro"),true)}
@@ -255,17 +255,18 @@ function render(){({vendas:renderSales,pedidos:renderOrders,itens:renderItems,ad
 /* ---------- pedidos ---------- */
 const ST={novo:["Novo","#ffa21a"],preparo:["Em preparo","#6cb4ff"],saiu:["Saiu / pronto","#c38bff"],concluido:["Concluído","#5fd38a"],cancelado:["Cancelado","#ff8f7a"]};
 const NEXT={novo:["preparo","Começar preparo"],preparo:["saiu","Saiu pra entrega / pronto"],saiu:["concluido","Concluir"]};
+const nº=o=>String(o.day_no??o.id).padStart(2,"0");
 const SZ={P:"Pequeno",M:"Médio",G:"Grande"};
 function custMsg(o,to){
   const n=String(o.customer_name).trim().split(" ")[0], h=new Date().getHours();
   const oi=h<12?"Bom dia":h<18?"Boa tarde":"Boa noite";
   const head={
-    preparo:`${oi}, ${n}! 👻\nObrigado por pedir com a gente na *Fantasminha Lanches*! 🧡\n\nSeu pedido *#${o.id}* foi *confirmado* e já está sendo preparado. 🍔🔥`,
+    preparo:`${oi}, ${n}! 👻\nObrigado por pedir com a gente na *Fantasminha Lanches*! 🧡\n\nSeu pedido *#${nº(o)}* foi *confirmado* e já está sendo preparado. 🍔🔥`,
     saiu:o.mode==="entrega"
-      ?`${oi}, ${n}! 👻🛵\nBoas notícias: seu pedido *#${o.id}* acabou de *sair para entrega*!\nNosso entregador já está a caminho e o seu lanche vai chegar quentinho. 🔥\n\n✅ Deixe o pagamento separado pra agilizar a entrega\n✅ Fique de olho no celular, se precisarmos a gente te chama por aqui`
-      :`${oi}, ${n}! 👻🍔\nSeu pedido *#${o.id}* está *prontinho* e esperando por você no balcão!\nÉ só chegar e informar o número *#${o.id}*. 😉`,
-    concluido:`${oi}, ${n}! 👻🧡\nSeu pedido *#${o.id}* foi *${o.mode==="entrega"?"entregue":"retirado"}* com sucesso.\n\nMuito obrigado por escolher a *Fantasminha Lanches*! Esperamos que tenha sido assombrosamente gostoso. 😋\n\n⭐ Se puder, conta pra gente o que achou. Sua opinião ajuda demais!`,
-    cancelado:`${oi}, ${n}. 👻\nInfelizmente seu pedido *#${o.id}* foi *cancelado*.\nSe tiver qualquer dúvida, é só responder esta mensagem.`}[to];
+      ?`${oi}, ${n}! 👻🛵\nBoas notícias: seu pedido *#${nº(o)}* acabou de *sair para entrega*!\nNosso entregador já está a caminho e o seu lanche vai chegar quentinho. 🔥\n\n✅ Deixe o pagamento separado pra agilizar a entrega\n✅ Fique de olho no celular, se precisarmos a gente te chama por aqui`
+      :`${oi}, ${n}! 👻🍔\nSeu pedido *#${nº(o)}* está *prontinho* e esperando por você no balcão!\nÉ só chegar e informar o número *#${nº(o)}*. 😉`,
+    concluido:`${oi}, ${n}! 👻🧡\nSeu pedido *#${nº(o)}* foi *${o.mode==="entrega"?"entregue":"retirado"}* com sucesso.\n\nMuito obrigado por escolher a *Fantasminha Lanches*! Esperamos que tenha sido assombrosamente gostoso. 😋\n\n⭐ Se puder, conta pra gente o que achou. Sua opinião ajuda demais!`,
+    cancelado:`${oi}, ${n}. 👻\nInfelizmente seu pedido *#${nº(o)}* foi *cancelado*.\nSe tiver qualquer dúvida, é só responder esta mensagem.`}[to];
   if(!head)return "";
   const L=[head,"",to==="concluido"?"🧾 *Resumo do seu pedido:*":"🧾 *Seu pedido:*"];
   o.items.forEach(it=>{L.push(`• ${it.qty}x ${it.name}${it.size?` (${SZ[it.size]||it.size})`:""}${it.option?` · ${it.option}`:""} · ${BRL(it.total)}`);
@@ -329,7 +330,7 @@ function alertNew(o){beep();
   // cada pedido tem sua própria campainha e vibração, uma depois da outra
   const now=Date.now(), at=Math.max(now,vibAt); vibAt=at+4300;
   setTimeout(()=>{try{navigator.vibrate&&navigator.vibrate([400,150,400,150,400,150,600])}catch(e){}showBanner(o)},at-now);
-  toast(`Novo pedido #${o.id} · ${o.customer_name}`);if(tab!=="pedidos"){unseen++;badge()}
+  toast(`Novo pedido #${nº(o)} · ${o.customer_name}`);if(tab!=="pedidos"){unseen++;badge()}
   document.title=`(${D.orders.filter(x=>x.status==="novo").length}) Painel Fantasminha`}
 function badge(){const b=$("#newBadge");b.textContent=unseen;b.hidden=!unseen}
 const hhmm=d=>new Date(d).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
@@ -342,7 +343,7 @@ function renderOrders(){
   const F=[["abertos","Em aberto",open.length],["novo","Novos",cnt("novo")],["preparo","Em preparo",cnt("preparo")],["saiu","Saiu / pronto",cnt("saiu")],["fin","Finalizados",closed.length],["todos","Todos",D.orders.length]];
   const q=OQ.trim().toLowerCase().replace(/^#/,"");
   let list=OF==="abertos"?open:OF==="fin"?closed:OF==="todos"?D.orders:D.orders.filter(o=>o.status===OF);
-  if(q)list=list.filter(o=>String(o.id).includes(q)||o.customer_name.toLowerCase().includes(q)||String(o.phone).replace(/\D/g,"").includes(q.replace(/\D/g,"")||"§"));
+  if(q)list=list.filter(o=>nº(o).includes(q)||String(o.day_no||"")===q.replace(/^0+/,"")||o.customer_name.toLowerCase().includes(q)||String(o.phone).replace(/\D/g,"").includes(q.replace(/\D/g,"")||"§"));
   $("#main").innerHTML=`<section class="cat"><div class="cat-h"><h2>Pedidos de hoje <span id="liveDot" class="live${chan&&chan.state==="joined"?" on":""}" title="Conexão"></span></h2>
     <button class="${soundOn?"ghost":"btn"}" type="button" id="snd">${soundOn?"🔔 Som ligado":"Ligar som de alerta"}</button></div>
     ${soundOn?`<p class="hint">📱 A tela vai ficar <b>sempre ligada</b> enquanto o som estiver ativo, pra não perder pedido. Deixe o aparelho no carregador.</p>`:""}
@@ -356,7 +357,7 @@ function renderOrders(){
 }
 function card(o){
   const s=ST[o.status], nx=NEXT[o.status], tel=String(o.phone).replace(/\D/g,"");
-  return `<article class="ord st-${o.status}"><header><b>#${o.id}</b><span class="pill" style="--c:${s[1]}">${s[0]}</span><span class="when">${hhmm(o.created_at)}</span></header>
+  return `<article class="ord st-${o.status}"><header><b>#${nº(o)}</b><span class="pill" style="--c:${s[1]}">${s[0]}</span><span class="when">${hhmm(o.created_at)}</span></header>
   <div class="who"><b>${esc(o.customer_name)}</b> · <a href="https://wa.me/55${tel}" target="_blank" rel="noopener">${esc(o.phone)}</a>${o.cpf?` · CPF ${esc(o.cpf)}`:""}</div>
   <div class="addr">${o.mode==="entrega"?`🛵 <b>${esc(o.street)}, ${esc(o.number)}</b> · ${esc(o.district)} · ${esc(o.region)}${o.complement?`<br><span>${esc(o.complement)}</span>`:""}`:"🏃 <b>Retirada no balcão</b>"}</div>
   <ul class="its">${o.items.map(it=>`<li><div class="iln"><span class="qb">${it.qty}x</span><div><b>${esc(it.name)}</b>${it.size?` <span class="tag">${SZ[it.size]||it.size}</span>`:""}${it.option?` <span class="tag">${esc(it.option)}</span>`:""}${it.number?` <small class="inum">nº ${it.number}</small>`:""}

@@ -204,6 +204,7 @@ const sb=supabase.createClient(SB_URL,SB_KEY);
 let ADD=[],CATS=[],FEES=[];
 const $=s=>document.querySelector(s);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const nº=o=>String(o.day_no??o.id).padStart(2,"0");
 let cart=[], WA="", sending=false, HOURS=null, STATUS="auto";
 const DIAS=["domingo","segunda","terça","quarta","quinta","sexta","sábado"];
 function spNow(){const f=new Intl.DateTimeFormat("en-US",{timeZone:"America/Sao_Paulo",weekday:"short",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).formatToParts(new Date());
@@ -339,7 +340,7 @@ async function send(fee){
   done(data);
 }
 function waText(o){
-  const L=[`*Pedido #${o.id} · Fantasminha Lanches*`,""];
+  const L=[`*Pedido #${nº(o)} · Fantasminha Lanches*`,""];
   o.items.forEach(it=>{L.push(`*${it.qty}x ${it.name}*${it.number?` (nº ${it.number})`:""}${it.size?` (${({P:"Pequeno",M:"Médio",G:"Grande"})[it.size]})`:""} · ${BRL(+it.total)}`);
     if(it.option)L.push(`   > ${it.option}`);it.addons.forEach(a=>L.push(`   + ${a.qty}x ${a.name}`));if(it.obs)L.push(`   Obs: ${it.obs}`)});
   L.push("",`Subtotal: ${BRL(+o.subtotal)}`);
@@ -353,7 +354,7 @@ function waText(o){
 function done(o){
   const url=WA?`https://wa.me/${WA}?text=${encodeURIComponent(waText(o))}`:"";
   open(`<div class="sh-head"><div></div><button class="x" type="button" data-a="x" aria-label="Fechar">×</button></div>
-  <div class="done">${$(".logo")?`<img class="done-logo" src="${$(".logo").src}" alt="" width="170" height="133">`:""}<h3>Pedido #${o.id} recebido!</h3>
+  <div class="done">${$(".logo")?`<img class="done-logo" src="${$(".logo").src}" alt="" width="170" height="133">`:""}<h3>Pedido #${nº(o)} recebido!</h3>
   ${url?`<div class="laststep"><b>Falta só 1 passo:</b> envie o pedido no nosso WhatsApp pra gente confirmar com você. 👇</div>
   <a class="primary wa" id="waBtn" href="${url}" target="_blank" rel="noopener" style="width:100%;text-decoration:none"><span>Enviar pedido no WhatsApp</span><span>${BRL(+o.total)}</span></a>
   <p class="hint2">Ao abrir o WhatsApp, é só tocar em <b>enviar ➤</b>.</p>`:`<p>Seu pedido já chegou na cozinha.</p>`}
