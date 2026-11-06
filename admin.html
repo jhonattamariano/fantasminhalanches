@@ -127,6 +127,11 @@ main{padding-block:8px 16px}
 .foot2{display:flex;justify-content:space-between;align-items:center;font-variant-numeric:tabular-nums}
 .foot2 b{font-size:20px}
 .resend{color:var(--accent);font-size:14px}
+.ofil{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}
+.chip{flex:none;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:7px 12px;font-weight:600;font-size:14px}
+.chip span{color:var(--muted);margin-left:4px;font-variant-numeric:tabular-nums}
+.chip.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}.chip.on span{color:var(--accent-ink)}
+.chip.hot:not(.on){border-color:var(--accent)}.chip.hot span{color:var(--accent);font-weight:800}
 .seg.s3{grid-template-columns:repeat(3,1fr)}
 .hrs{display:grid;gap:6px}
 .hr{display:grid;grid-template-columns:1fr auto 96px auto 96px;gap:8px;align-items:center}
@@ -281,15 +286,24 @@ function alertNew(o){beep();try{navigator.vibrate&&navigator.vibrate([200,100,20
   document.title=`(${D.orders.filter(x=>x.status==="novo").length}) Painel Fantasminha`}
 function badge(){const b=$("#newBadge");b.textContent=unseen;b.hidden=!unseen}
 const hhmm=d=>new Date(d).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
+let OF="abertos", OQ="";
 function renderOrders(){
   const open=D.orders.filter(o=>!["concluido","cancelado"].includes(o.status)), closed=D.orders.filter(o=>["concluido","cancelado"].includes(o.status));
   const tot=D.orders.filter(o=>o.status!=="cancelado").reduce((a,o)=>a+ +o.total,0);
   document.title=`${open.filter(o=>o.status==="novo").length?`(${open.filter(o=>o.status==="novo").length}) `:""}Painel Fantasminha`;
+  const cnt=k=>D.orders.filter(o=>o.status===k).length;
+  const F=[["abertos","Em aberto",open.length],["novo","Novos",cnt("novo")],["preparo","Em preparo",cnt("preparo")],["saiu","Saiu / pronto",cnt("saiu")],["fin","Finalizados",closed.length],["todos","Todos",D.orders.length]];
+  const q=OQ.trim().toLowerCase().replace(/^#/,"");
+  let list=OF==="abertos"?open:OF==="fin"?closed:OF==="todos"?D.orders:D.orders.filter(o=>o.status===OF);
+  if(q)list=list.filter(o=>String(o.id).includes(q)||o.customer_name.toLowerCase().includes(q)||String(o.phone).replace(/\D/g,"").includes(q.replace(/\D/g,"")||"§"));
   $("#main").innerHTML=`<section class="cat"><div class="cat-h"><h2>Pedidos de hoje</h2>
     <button class="${soundOn?"ghost":"btn"}" type="button" id="snd">${soundOn?"🔔 Som ligado":"Ligar som de alerta"}</button></div>
     <p class="hint">${D.orders.length} pedido(s) hoje · ${BRL(tot)} · os novos aparecem sozinhos, sem atualizar a página.</p>
-    <div class="olist">${open.map(card).join("")||'<p class="empty">Nenhum pedido em aberto agora.</p>'}</div>
-    ${closed.length?`<h2 style="font-size:22px;margin-top:18px;color:var(--muted)">Finalizados</h2><div class="olist">${closed.map(card).join("")}</div>`:""}</section>`;
+    <div class="ofil">${F.map(([k,l,n])=>`<button type="button" class="chip${OF===k?" on":""}${k==="novo"&&n?" hot":""}" data-of="${k}">${l} <span>${n}</span></button>`).join("")}</div>
+    <input id="oq" type="search" placeholder="Buscar por nº, nome ou telefone" value="${esc(OQ)}" aria-label="Buscar pedido">
+    <div class="olist">${list.map(card).join("")||`<p class="empty">${q?"Nenhum pedido encontrado.":"Nenhum pedido aqui."}</p>`}</div></section>`;
+  $("#main").querySelectorAll("[data-of]").forEach(b=>b.onclick=()=>{OF=b.dataset.of;renderOrders()});
+  const qi=$("#oq");qi.oninput=()=>{OQ=qi.value;const pos=qi.selectionStart;renderOrders();const n=$("#oq");n.focus();n.setSelectionRange(pos,pos)};
   $("#snd").onclick=()=>{soundOn=!soundOn;if(soundOn){actx=actx||new AudioContext();actx.resume();beep()}renderOrders()};
 }
 function card(o){
