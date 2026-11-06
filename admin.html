@@ -54,7 +54,7 @@ label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08
 .tab.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
 
 main{padding-block:8px 80px}
-.cat{padding-top:22px;display:grid;gap:8px}
+.cat{padding-top:22px;display:grid;gap:10px}
 .cat-h{display:flex;justify-content:space-between;align-items:center;gap:10px}
 .cat-h h2{font-size:28px;color:var(--accent)}
 .row{display:grid;grid-template-columns:56px 1fr auto;gap:12px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 10px 8px 8px}
@@ -122,6 +122,26 @@ main{padding-block:8px 80px}
 .foot2{display:flex;justify-content:space-between;align-items:center;font-variant-numeric:tabular-nums}
 .foot2 b{font-size:20px}
 .resend{color:var(--accent);font-size:14px}
+.mnav{display:flex;align-items:center;gap:8px}.mnav b{min-width:130px;text-align:center}.mnav .ghost{padding:6px 12px}.mnav .ghost:disabled{opacity:.35}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px;display:grid;gap:2px;min-width:0}
+.kpi span{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.kpi b{font-size:24px;font-variant-numeric:tabular-nums}.kpi small{color:var(--muted);font-size:12px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;display:grid;gap:10px;position:relative}
+.ph{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.ph h3{font-size:24px}
+.seg.sm{grid-template-columns:auto auto}.seg.sm button{padding:6px 10px;font-size:13px}
+.rank{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.rank li{display:grid;grid-template-columns:24px 1fr;gap:8px;align-items:center}
+.pos{color:var(--muted);font-weight:700;text-align:right;font-variant-numeric:tabular-nums}
+.rk{display:grid;gap:4px;min-width:0}.rl{display:flex;justify-content:space-between;gap:10px}.rl b{min-width:0;overflow-wrap:anywhere}
+.rl span{font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:700}.rl em{font-style:normal;color:var(--muted);font-weight:500;margin-left:6px;font-size:13px}
+.bar{height:8px;background:var(--surface2);border-radius:4px;overflow:hidden}.bar i{display:block;height:100%;background:var(--accent);border-radius:0 4px 4px 0}
+.days{display:grid;grid-template-columns:repeat(var(--n),1fr);gap:2px;height:140px;align-items:end;border-bottom:1px solid var(--line)}
+.day{height:100%;display:flex;align-items:flex-end;cursor:pointer;outline-offset:1px}.day i{display:block;width:100%;background:var(--accent);opacity:.55;border-radius:3px 3px 0 0}
+.day.best i,.day:hover i,.day:focus i{opacity:1}
+.daxis{display:flex;justify-content:space-between;color:var(--muted);font-size:12px;font-variant-numeric:tabular-nums}
+.tip{position:absolute;background:var(--fg);color:var(--bg);font-size:13px;font-weight:600;padding:5px 9px;border-radius:6px;pointer-events:none;white-space:nowrap}
+.payr{display:grid;grid-template-columns:80px 1fr 44px 90px;gap:10px;align-items:center;font-variant-numeric:tabular-nums}.payr b{text-align:right}.payr em{font-style:normal;color:var(--muted);text-align:right;font-size:14px}
 .acts2{display:flex;gap:8px;flex-wrap:wrap}.acts2 .btn{flex:1;text-align:center;text-decoration:none;display:flex;flex-direction:column;align-items:center;justify-content:center}.acts2 .btn small{font-weight:600;font-size:12px;opacity:.75}
 </style>
 </head>
@@ -145,6 +165,7 @@ main{padding-block:8px 80px}
     <button class="ghost" id="logout" type="button">Sair</button>
     <nav class="tabs" aria-label="Seções">
       <button class="tab on" type="button" data-tab="pedidos">Pedidos <span id="newBadge" class="nb" hidden>0</span></button>
+      <button class="tab" type="button" data-tab="vendas">Vendas</button>
       <button class="tab" type="button" data-tab="itens">Cardápio</button>
       <button class="tab" type="button" data-tab="addons">Acréscimos</button>
       <button class="tab" type="button" data-tab="fees">Taxas de entrega</button>
@@ -163,7 +184,7 @@ const SB_URL="https://hoqssxvzyxkakwwtqstg.supabase.co", SB_KEY="sb_publishable_
 const sb=supabase.createClient(SB_URL,SB_KEY);
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-const BRL=v=>"R$ "+Number(v).toFixed(2).replace(".",",");
+const BRL=v=>"R$ "+Number(v).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
 const num=v=>{const n=parseFloat(String(v).replace(/\s|R\$/g,"").replace(",","."));return isNaN(n)?null:Math.round(n*100)/100};
 const money=v=>v==null?"":Number(v).toFixed(2).replace(".",",");
 let D={cats:[],items:[],addons:[],fees:[],orders:[],settings:{}}, tab="pedidos", soundOn=false, unseen=0;
@@ -200,7 +221,7 @@ async function load(){
   await loadOrders();listenOrders();render();
 }
 document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{tab=b.dataset.tab;document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("on",x===b));render()});
-function render(){({pedidos:renderOrders,itens:renderItems,addons:()=>renderList("addons"),fees:()=>renderList("fees"),loja:renderLoja})[tab]();if(tab==="pedidos"){unseen=0;badge()}}
+function render(){({vendas:renderSales,pedidos:renderOrders,itens:renderItems,addons:()=>renderList("addons"),fees:()=>renderList("fees"),loja:renderLoja})[tab]();if(tab==="pedidos"){unseen=0;badge()}}
 
 /* ---------- pedidos ---------- */
 const ST={novo:["Novo","#ffa21a"],preparo:["Em preparo","#6cb4ff"],saiu:["Saiu / pronto","#c38bff"],concluido:["Concluído","#5fd38a"],cancelado:["Cancelado","#ff8f7a"]};
@@ -276,6 +297,54 @@ $("#main").addEventListener("click",async e=>{const b=e.target.closest("[data-st
   const o0=D.orders.find(x=>x.id==b.dataset.st); if(o0)openWa(waCust(o0,b.dataset.to));
   b.style.pointerEvents="none";b.disabled=true;const {error}=await sb.from("orders").update({status:b.dataset.to}).eq("id",b.dataset.st);
   if(error){b.disabled=false;return fail(error)}const o=D.orders.find(x=>x.id==b.dataset.st);o.status=b.dataset.to;renderOrders()});
+
+/* ---------- vendas ---------- */
+let SM={y:new Date().getFullYear(),m:new Date().getMonth(),by:"qty",rows:null,key:""};
+const MESES=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+async function renderSales(){
+  const key=SM.y+"-"+SM.m;
+  if(SM.key!==key){SM.rows=null;SM.key=key;
+    $("#main").innerHTML='<p class="empty">Carregando vendas…</p>';
+    const a=new Date(SM.y,SM.m,1), b=new Date(SM.y,SM.m+1,1);
+    const {data,error}=await sb.from("orders").select("id,created_at,status,mode,payment,items,subtotal,delivery_fee,total").gte("created_at",a.toISOString()).lt("created_at",b.toISOString()).order("created_at");
+    if(error){$("#main").innerHTML='<p class="empty">Não foi possível carregar as vendas.</p>';return fail(error)}
+    if(SM.key!==key)return; SM.rows=data;
+  }
+  const rows=SM.rows.filter(o=>o.status!=="cancelado"), canc=SM.rows.length-rows.length;
+  const fat=rows.reduce((a,o)=>a+ +o.total,0), fee=rows.reduce((a,o)=>a+ +o.delivery_fee,0), n=rows.length;
+  const prod={}; let units=0;
+  rows.forEach(o=>o.items.forEach(it=>{const k=(it.number?it.number+". ":"")+it.name+(it.size?` (${it.size})`:"");const p=prod[k]||(prod[k]={nm:k,q:0,v:0});p.q+=it.qty;p.v+= +it.total;units+=it.qty}));
+  const top=Object.values(prod).sort((a,b)=>SM.by==="qty"?b.q-a.q||b.v-a.v:b.v-a.v||b.q-a.q).slice(0,10);
+  const maxTop=Math.max(1,...top.map(p=>SM.by==="qty"?p.q:p.v));
+  const days=new Date(SM.y,SM.m+1,0).getDate(), perDay=Array.from({length:days},()=>({v:0,n:0}));
+  rows.forEach(o=>{const d=new Date(o.created_at).getDate()-1;perDay[d].v+= +o.total;perDay[d].n++});
+  const maxDay=Math.max(1,...perDay.map(d=>d.v)), best=perDay.reduce((bi,d,i)=>d.v>perDay[bi].v?i:bi,0);
+  const pay={};rows.forEach(o=>{pay[o.payment]=(pay[o.payment]||0)+ +o.total});
+  const ent=rows.filter(o=>o.mode==="entrega").length;
+  const now=new Date(), isCur=SM.y===now.getFullYear()&&SM.m===now.getMonth();
+  $("#main").innerHTML=`<section class="cat">
+   <div class="cat-h"><h2>Vendas</h2><div class="mnav"><button class="ghost" type="button" data-mn="-1" aria-label="Mês anterior">‹</button><b>${MESES[SM.m]} ${SM.y}</b><button class="ghost" type="button" data-mn="1" aria-label="Próximo mês"${isCur?" disabled":""}>›</button></div></div>
+   <div class="kpis">
+     <div class="kpi"><span>Faturamento</span><b>${BRL(fat)}</b><small>${fee?`inclui ${BRL(fee)} de entrega`:"&nbsp;"}</small></div>
+     <div class="kpi"><span>Pedidos</span><b>${n}</b><small>${canc?`${canc} cancelado(s) fora da conta`:"&nbsp;"}</small></div>
+     <div class="kpi"><span>Ticket médio</span><b>${BRL(n?fat/n:0)}</b><small>por pedido</small></div>
+     <div class="kpi"><span>Itens vendidos</span><b>${units}</b><small>${n?`${ent} entrega · ${n-ent} retirada`:"&nbsp;"}</small></div>
+   </div>
+   ${n?`<div class="panel"><div class="ph"><h3>Mais vendidos</h3><div class="seg sm"><button type="button" data-by="qty" class="${SM.by==="qty"?"on":""}">Quantidade</button><button type="button" data-by="val" class="${SM.by==="val"?"on":""}">Faturamento</button></div></div>
+     <ol class="rank">${top.map((p,i)=>{const v=SM.by==="qty"?p.q:p.v;return `<li><span class="pos">${i+1}</span><div class="rk"><div class="rl"><b>${esc(p.nm)}</b><span>${SM.by==="qty"?`${p.q} un`:BRL(p.v)} <em>${SM.by==="qty"?BRL(p.v):`${p.q} un`}</em></span></div><div class="bar"><i style="width:${(v/maxTop*100).toFixed(1)}%"></i></div></div></li>`}).join("")}</ol></div>
+   <div class="panel"><div class="ph"><h3>Faturamento por dia</h3><span class="hint">Melhor dia: ${best+1}/${SM.m+1} · ${BRL(perDay[best].v)}</span></div>
+     <div class="days" style="--n:${days}">${perDay.map((d,i)=>`<div class="day${i===best&&d.v?" best":""}" tabindex="0" data-tip="${i+1}/${SM.m+1} · ${BRL(d.v)} · ${d.n} pedido(s)"><i style="height:${d.v?Math.max(3,d.v/maxDay*100):0}%"></i></div>`).join("")}</div>
+     <div class="daxis"><span>1</span><span>${Math.ceil(days/2)}</span><span>${days}</span></div><div class="tip" id="tip" hidden></div></div>
+   <div class="panel"><div class="ph"><h3>Formas de pagamento</h3></div>
+     ${Object.entries(pay).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div class="payr"><span>${esc(k)}</span><div class="bar"><i style="width:${(v/fat*100).toFixed(1)}%"></i></div><b>${Math.round(v/fat*100)}%</b><em>${BRL(v)}</em></div>`).join("")}</div>`
+   :`<p class="empty">Nenhuma venda em ${MESES[SM.m]} ${SM.y}.</p>`}
+  </section>`;
+  $("#main").querySelectorAll("[data-mn]").forEach(b=>b.onclick=()=>{SM.m+= +b.dataset.mn;if(SM.m<0){SM.m=11;SM.y--}if(SM.m>11){SM.m=0;SM.y++}renderSales()});
+  $("#main").querySelectorAll("[data-by]").forEach(b=>b.onclick=()=>{SM.by=b.dataset.by;renderSales()});
+  const tip=$("#tip"); if(tip){const box=$(".days");
+    const show=el=>{tip.textContent=el.dataset.tip;tip.hidden=false;const r=el.getBoundingClientRect(),pr=box.parentElement.getBoundingClientRect();tip.style.left=Math.min(pr.width-150,Math.max(0,r.left-pr.left-60))+"px";tip.style.top=(r.top-pr.top-34)+"px"};
+    box.querySelectorAll(".day").forEach(d=>{d.onmouseenter=d.onfocus=()=>show(d);d.onclick=()=>show(d)});box.onmouseleave=()=>tip.hidden=true}
+}
 
 /* ---------- loja ---------- */
 function renderLoja(){
