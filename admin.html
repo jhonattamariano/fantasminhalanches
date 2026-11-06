@@ -127,6 +127,11 @@ main{padding-block:8px 16px}
 .foot2{display:flex;justify-content:space-between;align-items:center;font-variant-numeric:tabular-nums}
 .foot2 b{font-size:20px}
 .resend{color:var(--accent);font-size:14px}
+.seg.s3{grid-template-columns:repeat(3,1fr)}
+.hrs{display:grid;gap:6px}
+.hr{display:grid;grid-template-columns:1fr auto 96px auto 96px;gap:8px;align-items:center}
+.hr.off b{color:var(--muted)}.hr input[type=time]{padding:8px}.hr input:disabled{opacity:.35}.hr .as{color:var(--muted);font-size:13px}
+@media (max-width:420px){.hr{grid-template-columns:1fr auto;row-gap:4px}.hr input[type=time]{grid-column:span 1}.hr .as{display:none}}
 .mnav{display:flex;align-items:center;gap:8px}.mnav b{min-width:130px;text-align:center}.mnav .ghost{padding:6px 12px}.mnav .ghost:disabled{opacity:.35}
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
 .kpi{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px;display:grid;gap:2px;min-width:0}
@@ -355,14 +360,33 @@ async function renderSales(){
 
 /* ---------- loja ---------- */
 function renderLoja(){
-  const w=D.settings.whatsapp||"";
+  const w=D.settings.whatsapp||"", st=D.settings.status||"auto";
+  let H={};try{H=JSON.parse(D.settings.hours||"{}")}catch(e){}
+  const DN=["Domingo","Segunda","Terça","Quarta","Quinta","Sexta","Sábado"], ord=[2,3,4,5,6,0,1];
   $("#main").innerHTML=`<section class="cat"><div class="cat-h"><h2>Loja</h2></div>
-  <div class="f"><label for="wa">WhatsApp que recebe os pedidos</label><input id="wa" inputmode="tel" value="${esc(w)}" placeholder="5531999999999">
-  <p class="hint">Com 55 e o DDD, só números. Ex: 5531973066832</p></div>
-  <button class="btn" type="button" id="saveWa">Salvar</button></section>`;
+  <div class="panel"><div class="ph"><h3>Situação agora</h3></div>
+    <div class="seg s3">${[["auto","Seguir horário"],["closed","Fechar agora"],["open","Abrir agora"]].map(([k,l])=>`<button type="button" data-ss="${k}" class="${st===k?"on":""}">${l}</button>`).join("")}</div>
+    <p class="hint">${st==="auto"?"Os pedidos abrem e fecham sozinhos pelo horário abaixo.":st==="closed"?"<b>Loja fechada:</b> ninguém consegue pedir até você voltar pra “Seguir horário”.":"<b>Loja aberta fora do horário:</b> lembre de voltar pra “Seguir horário” depois."}</p></div>
+  <div class="panel"><div class="ph"><h3>Horário de atendimento</h3></div>
+    <div class="hrs">${ord.map(i=>{const d=H[String(i)];return `<div class="hr${d?"":" off"}"><b>${DN[i]}</b>
+      <span class="sw"><input type="checkbox" data-hd="${i}" ${d?"checked":""} aria-label="Abre ${DN[i]}"><i></i></span>
+      <input type="time" data-ho="${i}" value="${d?d.open:"18:00"}" aria-label="Abre às" ${d?"":"disabled"}><span class="as">às</span>
+      <input type="time" data-hc="${i}" value="${d?d.close:"23:30"}" aria-label="Fecha às" ${d?"":"disabled"}></div>`}).join("")}</div>
+    <p class="hint">Use 00:00 pra fechar à meia-noite. Se o horário de fechar for antes do de abrir, ele entende que passa da meia-noite.</p>
+    <button class="btn" type="button" id="saveH">Salvar horário</button></div>
+  <div class="panel"><div class="f"><label for="wa">WhatsApp que recebe os pedidos</label><input id="wa" inputmode="tel" value="${esc(w)}" placeholder="5531999999999">
+    <p class="hint">Com 55 e o DDD, só números. Ex: 5531973066832</p></div>
+    <button class="btn" type="button" id="saveWa">Salvar WhatsApp</button></div></section>`;
+  const setS=async(k,v)=>{const {error}=await sb.from("settings").upsert({key:k,value:v});if(error){fail(error);return false}D.settings[k]=v;return true};
+  $("#main").querySelectorAll("[data-ss]").forEach(b=>b.onclick=async()=>{if(await setS("status",b.dataset.ss)){toast({auto:"Seguindo o horário",closed:"Loja fechada para pedidos",open:"Loja aberta para pedidos"}[b.dataset.ss]);renderLoja()}});
+  $("#main").querySelectorAll("[data-hd]").forEach(c=>c.onchange=()=>{const i=c.dataset.hd;$(`[data-ho="${i}"]`).disabled=!c.checked;$(`[data-hc="${i}"]`).disabled=!c.checked;c.closest(".hr").classList.toggle("off",!c.checked)});
+  $("#saveH").onclick=async()=>{const out={};for(let i=0;i<7;i++){const on=$(`[data-hd="${i}"]`).checked,o=$(`[data-ho="${i}"]`).value,c=$(`[data-hc="${i}"]`).value;
+      if(on&&(!o||!c))return toast(`Preencha o horário de ${DN[i]}`,true);if(on&&o===c)return toast(`${DN[i]}: abrir e fechar não podem ser iguais`,true);out[i]=on?{open:o,close:c}:null}
+    if(await setS("hours",JSON.stringify(out)))toast("Horário salvo")};
   $("#saveWa").onclick=async()=>{const v=$("#wa").value.replace(/\D/g,"");if(v.length<12)return toast("Número inválido. Use 55 + DDD + número",true);
-    const {error}=await sb.from("settings").upsert({key:"whatsapp",value:v});if(error)return fail(error);D.settings.whatsapp=v;toast("WhatsApp salvo")}
+    if(await setS("whatsapp",v))toast("WhatsApp salvo")};
 }
+
 
 function priceLabel(it){return it.sizes&&it.sizes.length?it.sizes.map(s=>`${s.label} ${money(s.price)}`).join(" · "):BRL(it.price)}
 function renderItems(){
