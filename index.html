@@ -390,7 +390,9 @@ function waText(o){
     if(it.option)L.push(`   > ${it.option}`);it.addons.forEach(a=>L.push(`   + ${a.qty}x ${a.name}`));if(it.obs)L.push(`   Obs: ${it.obs}`)});
   L.push("",`Subtotal: ${BRL(+o.subtotal)}`);
   if(ck.mode==="entrega")L.push(`Entrega (${o.region}): ${BRL(+o.fee)}`);
-  L.push(`*Total: ${BRL(+o.total)}*`,`Pagamento: ${ck.pay}${ck.pay==="Dinheiro"&&ck.troco?` (troco para R$ ${ck.troco})`:""}`,"");
+  L.push(`*Total: ${BRL(+o.total)}*`,`Pagamento: ${ck.pay}${ck.pay==="Dinheiro"&&ck.troco?` (troco para R$ ${ck.troco})`:""}`);
+  if(ck.pay==="Pix"&&PIX.key)L.push(`💠 Chave Pix (celular): ${pixFmt(PIX.key)}`,`Nome: ${PIX.name}`,"_Vou enviar o comprovante aqui._");
+  L.push("");
   L.push(`Nome: ${ck.name.trim()}`,`WhatsApp: ${ck.phone}`);
   if(ck.mode==="entrega"){L.push(`Endereço: ${ck.rua.trim()}, ${ck.num.trim()} · ${ck.bai.trim()}`);if(ck.comp.trim())L.push(`Referência: ${ck.comp.trim()}`)}
   else L.push("Vou retirar no local");
