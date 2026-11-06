@@ -114,7 +114,7 @@ main{padding-block:8px 16px}
 .olist{display:grid;gap:10px;padding-top:6px}
 .ord{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;display:grid;gap:8px;border-left:5px solid var(--line)}
 .ord.st-novo{border-left-color:var(--accent);box-shadow:0 0 0 1px rgba(255,162,26,.35)}
-.ord.st-concluido,.ord.st-cancelado{opacity:.6}
+.ord.st-saiu,.ord.st-concluido,.ord.st-cancelado{opacity:.6}
 .ord header{display:flex;align-items:center;gap:10px}
 .ord header b{font-family:var(--display);font-size:28px;font-weight:400;letter-spacing:.02em}
 .pill{border:1px solid var(--c);color:var(--c);border-radius:999px;padding:2px 10px;font-size:13px;font-weight:700}
@@ -253,8 +253,8 @@ document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{tab=b.dataset.tab;do
 function render(){({vendas:renderSales,pedidos:renderOrders,itens:renderItems,addons:()=>renderList("addons"),fees:()=>renderList("fees"),loja:renderLoja})[tab]();if(tab==="pedidos"){unseen=0;badge()}}
 
 /* ---------- pedidos ---------- */
-const ST={novo:["Novo","#ffa21a"],preparo:["Em preparo","#6cb4ff"],saiu:["Saiu / pronto","#c38bff"],concluido:["Concluído","#5fd38a"],cancelado:["Cancelado","#ff8f7a"]};
-const NEXT={novo:["preparo","Começar preparo"],preparo:["saiu","Saiu pra entrega / pronto"],saiu:["concluido","Concluir"]};
+const ST={novo:["Novo","#ffa21a"],preparo:["Em preparo","#6cb4ff"],saiu:["Finalizado","#5fd38a"],concluido:["Concluído","#5fd38a"],cancelado:["Cancelado","#ff8f7a"]};
+const NEXT={novo:["preparo","Começar preparo"],preparo:["saiu","Finalizar"]};
 const nº=o=>String(o.day_no??o.id).padStart(2,"0");
 const SZ={P:"Pequeno",M:"Médio",G:"Grande"};
 function custMsg(o,to){
@@ -277,7 +277,7 @@ function custMsg(o,to){
   if(o.payment==="Pix"&&D.settings.pix_key&&(to==="preparo"||to==="saiu"))L.push(`💠 Pix (celular): ${D.settings.pix_key}${D.settings.pix_name?` · ${D.settings.pix_name}`:""}`,"_Se ainda não pagou, envie o comprovante por aqui._");
   L.push(o.mode==="entrega"?`📍 Entrega: ${o.street}, ${o.number} · ${o.district}${o.complement?` (${o.complement})`:""}`:"📍 Retirada no balcão");
   L.push("",({preparo:"Qualquer dúvida, é só chamar por aqui! 👻🍔",
-    saiu:o.mode==="entrega"?"Bom apetite! 👻🍔":"Te esperamos! 👻🍔",
+    saiu:o.mode==="entrega"?"Muito obrigado por pedir com a gente! 🧡\nBom apetite! 👻🍔":"Muito obrigado por pedir com a gente! 🧡\nTe esperamos! 👻🍔",
     concluido:`Bateu a fome de novo? Peça pelo nosso cardápio:\n👉 ${location.origin}\n\nAté a próxima! 👻🍔`,
     cancelado:"Pedimos desculpas pelo transtorno. 👻"})[to]);
   return L.join("\n");
@@ -337,11 +337,11 @@ function badge(){const b=$("#newBadge");b.textContent=unseen;b.hidden=!unseen}
 const hhmm=d=>new Date(d).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
 let OF="abertos", OQ="";
 function renderOrders(){
-  const open=D.orders.filter(o=>!["concluido","cancelado"].includes(o.status)), closed=D.orders.filter(o=>["concluido","cancelado"].includes(o.status));
+  const FIN=["saiu","concluido","cancelado"], open=D.orders.filter(o=>!FIN.includes(o.status)), closed=D.orders.filter(o=>FIN.includes(o.status));
   const tot=D.orders.filter(o=>o.status!=="cancelado").reduce((a,o)=>a+ +o.total,0);
   document.title=`${open.filter(o=>o.status==="novo").length?`(${open.filter(o=>o.status==="novo").length}) `:""}Painel Fantasminha`;
   const cnt=k=>D.orders.filter(o=>o.status===k).length;
-  const F=[["abertos","Em aberto",open.length],["novo","Novos",cnt("novo")],["preparo","Em preparo",cnt("preparo")],["saiu","Saiu / pronto",cnt("saiu")],["fin","Finalizados",closed.length],["todos","Todos",D.orders.length]];
+  const F=[["abertos","Em aberto",open.length],["novo","Novos",cnt("novo")],["preparo","Em preparo",cnt("preparo")],["fin","Finalizados",closed.length],["todos","Todos",D.orders.length]];
   const q=OQ.trim().toLowerCase().replace(/^#/,"");
   let list=OF==="abertos"?open:OF==="fin"?closed:OF==="todos"?D.orders:D.orders.filter(o=>o.status===OF);
   if(q)list=list.filter(o=>nº(o).includes(q)||String(o.day_no||"")===q.replace(/^0+/,"")||o.customer_name.toLowerCase().includes(q)||String(o.phone).replace(/\D/g,"").includes(q.replace(/\D/g,"")||"§"));
@@ -365,7 +365,7 @@ function card(o){
     ${it.addons.map(a=>`<div class="sub">+ ${a.qty}x ${esc(a.name)}</div>`).join("")}${it.obs?`<div class="obs">Obs: ${esc(it.obs)}</div>`:""}</div></div></li>`).join("")}</ul>
   ${o.status!=="novo"?`<a class="resend" href="${waCust(o,o.status)}" target="_blank" rel="noopener">Reenviar aviso de "${s[0]}" no WhatsApp</a>`:""}
   <div class="foot2"><span>${esc(o.payment)}${o.change_for?` · troco p/ R$ ${esc(o.change_for)}`:""}</span><b>${BRL(o.total)}</b></div>
-  ${nx||o.status==="novo"||o.status==="preparo"?`<div class="acts2">${nx?`<a class="btn" href="${waCust(o,nx[0])}" target="_blank" rel="noopener" data-st="${o.id}" data-to="${nx[0]}">${nx[1]} <small>· avisa no WhatsApp</small></a>`:""}${["novo","preparo"].includes(o.status)?`<button class="ghost" type="button" data-st="${o.id}" data-to="cancelado">Cancelar</button>`:""}</div>`:""}
+  ${nx||o.status==="novo"||o.status==="preparo"?`<div class="acts2">${nx?`<a class="btn" href="${waCust(o,nx[0])}" target="_blank" rel="noopener" data-st="${o.id}" data-to="${nx[0]}">${nx[0]==="saiu"?(o.mode==="entrega"?"🛵 Saiu pra entrega":"🍔 Pronto pra retirada"):nx[1]} <small>· ${nx[0]==="saiu"?"finaliza e ":""}avisa no WhatsApp</small></a>`:""}${["novo","preparo"].includes(o.status)?`<button class="ghost" type="button" data-st="${o.id}" data-to="cancelado">Cancelar</button>`:""}</div>`:""}
   </article>`}
 $("#main").addEventListener("click",async e=>{const b=e.target.closest("[data-st]");if(!b)return;
   if(b.dataset.to==="cancelado"&&b.dataset.sure!=="1"){b.dataset.sure="1";b.textContent="Toque de novo pra cancelar";setTimeout(()=>{if(b.isConnected){b.dataset.sure="";b.textContent="Cancelar"}},3000);return}
