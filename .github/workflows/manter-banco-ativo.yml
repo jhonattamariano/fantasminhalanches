@@ -1,0 +1,15 @@
+name: Manter banco ativo
+# O Supabase grátis pausa projetos sem uso por 7 dias. Isto acessa o cardápio a cada 3 dias.
+on:
+  schedule:
+    - cron: "17 12 */3 * *"
+  workflow_dispatch:
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Consultar o cardápio
+        run: |
+          curl -fsS "https://hoqssxvzyxkakwwtqstg.supabase.co/rest/v1/categories?select=id&limit=1" \
+            -H "apikey: sb_publishable_e_Ng5FaQreX1xhhlloOoIw_SE-PoAd3" > /dev/null
+          echo "Banco ativo"

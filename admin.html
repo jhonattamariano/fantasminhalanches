@@ -282,10 +282,19 @@ function openWa(url){let w=null;try{w=window.open(url,"_blank")}catch(e){}if(!w)
 const waCust=(o,to)=>`https://wa.me/55${String(o.phone).replace(/\D/g,"").replace(/^55(?=\d{10,11}$)/,"")}?text=${encodeURIComponent(custMsg(o,to))}`;
 function dayStart(){const d=new Date();d.setHours(0,0,0,0);return d.toISOString()}
 async function loadOrders(){const {data,error}=await sb.from("orders").select("*").gte("created_at",dayStart()).order("created_at",{ascending:false});if(error)return fail(error);D.orders=data}
-let chan;
-function listenOrders(){if(chan)return;
+let chan, polling;
+// rede de segurança: confere a cada 30s e ao voltar pra tela, caso o tempo real tenha caído
+async function syncOrders(){const {data,error}=await sb.from("orders").select("*").gte("created_at",dayStart()).order("created_at",{ascending:false});if(error||!data)return;
+  const known=new Set(D.orders.map(o=>o.id)), fresh=data.filter(o=>!known.has(o.id)).reverse();
+  data.forEach(n=>{const o=D.orders.find(x=>x.id===n.id);if(o)Object.assign(o,n)});
+  fresh.forEach(o=>{D.orders.unshift(o);alertNew(o)});
+  if(fresh.length||tab==="pedidos")D.orders.sort((a,b)=>b.id-a.id);
+  if(tab==="pedidos")renderOrders()}
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&chan)syncOrders()});
+addEventListener("online",()=>{if(chan)syncOrders()});
+function listenOrders(){if(chan)return;polling=setInterval(syncOrders,30000);
   chan=sb.channel("pedidos").on("postgres_changes",{event:"*",schema:"public",table:"orders"},pl=>{
-    if(pl.eventType==="INSERT"){D.orders.unshift(pl.new);alertNew(pl.new)}
+    if(pl.eventType==="INSERT"){if(D.orders.some(x=>x.id===pl.new.id))return;D.orders.unshift(pl.new);alertNew(pl.new)}
     else if(pl.eventType==="UPDATE"){const o=D.orders.find(x=>x.id===pl.new.id);if(o)Object.assign(o,pl.new)}
     if(tab==="pedidos")renderOrders();
   }).subscribe()}
