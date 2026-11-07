@@ -249,7 +249,7 @@ async function load(){
   D.priv={};const pv=await sb.from("private_settings").select("*");(pv.data||[]).forEach(x=>D.priv[x.key]=x.value);
   await loadOrders();listenOrders();render();
 }
-document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{tab=b.dataset.tab;document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("on",x===b));render()});
+document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{if(b.dataset.tab!=="vendas")salesOk=false;tab=b.dataset.tab;document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("on",x===b));render()});
 function render(){({vendas:renderSales,pedidos:renderOrders,itens:renderItems,addons:()=>renderList("addons"),fees:()=>renderList("fees"),loja:renderLoja})[tab]();if(tab==="pedidos"){unseen=0;badge()}}
 
 /* ---------- pedidos ---------- */
@@ -377,7 +377,32 @@ $("#main").addEventListener("click",async e=>{const b=e.target.closest("[data-st
 /* ---------- vendas ---------- */
 let SM={y:new Date().getFullYear(),m:new Date().getMonth(),by:"qty",rows:null,key:""};
 const MESES=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+let salesOk=false;
+const pinHash=async p=>[...new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode("fz-vendas:"+p)))].map(b=>b.toString(16).padStart(2,"0")).join("");
+function renderSalesLock(){
+  if(!D.priv.sales_pin){$("#main").innerHTML='<section class="cat"><div class="cat-h"><h2>Vendas</h2></div><p class="empty">🔒 As vendas estão protegidas por senha, mas a senha ainda não foi criada.</p></section>';return}
+  $("#main").innerHTML=`<section class="cat"><div class="cat-h"><h2>Vendas</h2></div>
+   <form class="panel" id="pinF" style="max-width:360px;margin:24px auto;display:grid;gap:12px">
+    <h3 style="margin:0">🔒 Área da chefe</h3><p class="hint" style="margin:0">Digite a senha pra ver as vendas.</p>
+    <div class="f"><label for="pinIn">Senha</label><input id="pinIn" type="password" inputmode="numeric" autocomplete="off" required></div>
+    <button class="btn" type="submit">Entrar</button></form></section>`;
+  $("#pinIn").focus();
+  $("#pinF").onsubmit=async e=>{e.preventDefault();const v=$("#pinIn").value.trim();
+    if(await pinHash(v)===D.priv.sales_pin){salesOk=true;renderSales()}else{$("#pinIn").value="";toast("Senha errada",true)}};
+}
+function changePin(){
+  const box=$("#pinBox");box.hidden=false;box.innerHTML=`<form id="pinC" style="display:grid;gap:10px">
+    <div class="f"><label for="np1">Nova senha</label><input id="np1" type="password" inputmode="numeric" autocomplete="new-password" minlength="4" required></div>
+    <div class="f"><label for="np2">Repita a nova senha</label><input id="np2" type="password" inputmode="numeric" autocomplete="new-password" required></div>
+    <div class="acts2"><button class="btn" type="submit">Salvar senha</button><button class="ghost" type="button" id="pinX">Cancelar</button></div></form>`;
+  $("#pinX").onclick=()=>{box.hidden=true;box.innerHTML=""};
+  $("#pinC").onsubmit=async e=>{e.preventDefault();const a=$("#np1").value.trim(),b=$("#np2").value.trim();
+    if(a.length<4)return toast("Use pelo menos 4 números",true);if(a!==b)return toast("As senhas não são iguais",true);
+    const h=await pinHash(a);const {error}=await sb.from("private_settings").upsert({key:"sales_pin",value:h});if(error)return fail(error);
+    D.priv.sales_pin=h;box.hidden=true;box.innerHTML="";toast("Senha trocada")};
+}
 async function renderSales(){
+  if(!salesOk)return renderSalesLock();
   const key=SM.y+"-"+SM.m;
   if(SM.key!==key){SM.rows=null;SM.key=key;
     $("#main").innerHTML='<p class="empty">Carregando vendas…</p>';
@@ -414,7 +439,11 @@ async function renderSales(){
    <div class="panel"><div class="ph"><h3>Formas de pagamento</h3></div>
      ${Object.entries(pay).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div class="payr"><span>${esc(k)}</span><div class="bar"><i style="width:${(v/fat*100).toFixed(1)}%"></i></div><b>${Math.round(v/fat*100)}%</b><em>${BRL(v)}</em></div>`).join("")}</div>`
    :`<p class="empty">Nenhuma venda em ${MESES[SM.m]} ${SM.y}.</p>`}
+   <div class="acts2" style="margin-top:16px"><button class="ghost" type="button" id="lockS">🔒 Bloquear</button><button class="ghost" type="button" id="chPin">Trocar senha</button></div>
+   <div class="panel" id="pinBox" hidden></div>
   </section>`;
+  $("#lockS").onclick=()=>{salesOk=false;renderSales()};
+  $("#chPin").onclick=changePin;
   $("#main").querySelectorAll("[data-mn]").forEach(b=>b.onclick=()=>{SM.m+= +b.dataset.mn;if(SM.m<0){SM.m=11;SM.y--}if(SM.m>11){SM.m=0;SM.y++}renderSales()});
   $("#main").querySelectorAll("[data-by]").forEach(b=>b.onclick=()=>{SM.by=b.dataset.by;renderSales()});
   const tip=$("#tip"); if(tip){const box=$(".days");
