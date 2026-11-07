@@ -247,7 +247,11 @@ async function load(){
   D={...D,cats:c.data,items:i.data,addons:a.data,fees:f.data};
   const st=await sb.from("settings").select("*");(st.data||[]).forEach(x=>D.settings[x.key]=x.value);
   D.priv={};const pv=await sb.from("private_settings").select("*");(pv.data||[]).forEach(x=>D.priv[x.key]=x.value);
+  const resetPin=new URLSearchParams(location.search).has("senha-vendas");
+  if(resetPin){history.replaceState(null,"",location.pathname);const {data:{user}}=await sb.auth.getUser();
+    if(user&&D.priv.sales_email&&user.email.toLowerCase()===D.priv.sales_email.toLowerCase()){tab="vendas";salesOk=true;document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("on",x.dataset.tab==="vendas"))}}
   await loadOrders();listenOrders();render();
+  if(resetPin&&salesOk){changePin();toast("Crie a nova senha das vendas")}
 }
 document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{if(b.dataset.tab!=="vendas")salesOk=false;tab=b.dataset.tab;document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("on",x===b));render()});
 function render(){({vendas:renderSales,pedidos:renderOrders,itens:renderItems,addons:()=>renderList("addons"),fees:()=>renderList("fees"),loja:renderLoja})[tab]();if(tab==="pedidos"){unseen=0;badge()}}
@@ -384,20 +388,25 @@ function renderSalesLock(){
   $("#main").innerHTML=`<section class="cat"><div class="cat-h"><h2>Vendas</h2></div>
    <form class="panel" id="pinF" style="max-width:360px;margin:24px auto;display:grid;gap:12px">
     <h3 style="margin:0">🔒 Área da chefe</h3><p class="hint" style="margin:0">Digite a senha pra ver as vendas.</p>
-    <div class="f"><label for="pinIn">Senha</label><input id="pinIn" type="password" inputmode="numeric" autocomplete="off" required></div>
-    <button class="btn" type="submit">Entrar</button></form></section>`;
+    <div class="f"><label for="pinIn">Senha</label><input id="pinIn" type="password" autocomplete="off" autocapitalize="off" required></div>
+    <button class="btn" type="submit">Entrar</button>
+    ${D.priv.sales_email?`<button class="ghost" type="button" id="pinForgot">Esqueci a senha</button>`:""}</form></section>`;
   $("#pinIn").focus();
+  if($("#pinForgot"))$("#pinForgot").onclick=async e=>{const b=e.currentTarget;b.disabled=true;
+    const {error}=await sb.auth.signInWithOtp({email:D.priv.sales_email,options:{shouldCreateUser:false,emailRedirectTo:location.origin+location.pathname+"?senha-vendas=nova"}});
+    b.disabled=false;if(error)return toast(/rate|seconds/i.test(error.message)?"Aguarde um pouco e tente de novo":"Não foi possível enviar o e-mail",true);
+    const m=D.priv.sales_email.replace(/^(.{3}).*(@.*)$/,"$1…$2");toast("Enviamos um link pro e-mail "+m+". Abra o link pra criar uma nova senha.")};
   $("#pinF").onsubmit=async e=>{e.preventDefault();const v=$("#pinIn").value.trim();
     if(await pinHash(v)===D.priv.sales_pin){salesOk=true;renderSales()}else{$("#pinIn").value="";toast("Senha errada",true)}};
 }
 function changePin(){
   const box=$("#pinBox");box.hidden=false;box.innerHTML=`<form id="pinC" style="display:grid;gap:10px">
-    <div class="f"><label for="np1">Nova senha</label><input id="np1" type="password" inputmode="numeric" autocomplete="new-password" minlength="4" required></div>
-    <div class="f"><label for="np2">Repita a nova senha</label><input id="np2" type="password" inputmode="numeric" autocomplete="new-password" required></div>
+    <div class="f"><label for="np1">Nova senha</label><input id="np1" type="password" autocomplete="new-password" autocapitalize="off" minlength="4" required></div>
+    <div class="f"><label for="np2">Repita a nova senha</label><input id="np2" type="password" autocomplete="new-password" autocapitalize="off" required></div>
     <div class="acts2"><button class="btn" type="submit">Salvar senha</button><button class="ghost" type="button" id="pinX">Cancelar</button></div></form>`;
   $("#pinX").onclick=()=>{box.hidden=true;box.innerHTML=""};
   $("#pinC").onsubmit=async e=>{e.preventDefault();const a=$("#np1").value.trim(),b=$("#np2").value.trim();
-    if(a.length<4)return toast("Use pelo menos 4 números",true);if(a!==b)return toast("As senhas não são iguais",true);
+    if(a.length<4)return toast("Use pelo menos 4 caracteres",true);if(a!==b)return toast("As senhas não são iguais",true);
     const h=await pinHash(a);const {error}=await sb.from("private_settings").upsert({key:"sales_pin",value:h});if(error)return fail(error);
     D.priv.sales_pin=h;box.hidden=true;box.innerHTML="";toast("Senha trocada")};
 }
