@@ -112,6 +112,14 @@ main{padding-block:8px 16px}
 .empty{color:var(--muted);padding-block:30px;text-align:center}
 .nb{display:inline-grid;place-items:center;min-width:20px;height:20px;border-radius:999px;background:var(--bad);color:#1a0703;font-size:12px;margin-left:4px;padding:0 5px}
 .olist{display:grid;gap:10px;padding-top:6px}
+.eo-lines{display:grid;gap:10px}
+.eo-l{border:1px solid var(--line);border-radius:12px;padding:10px;display:grid;gap:8px;background:var(--surface2)}
+.eo-top{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:start}
+.eo-q{display:flex;align-items:center;gap:6px}.eo-q button{width:40px;height:40px;padding:0;font-size:20px}.eo-q b{min-width:22px;text-align:center;font-size:18px}
+.eo-p{white-space:nowrap}.eo-acts{display:flex;gap:8px;flex-wrap:wrap}.eo-acts button{min-height:40px}
+.eo-ed{display:grid;gap:10px;border-top:1px dashed var(--line);padding-top:10px}
+.eo-adds{display:flex;flex-wrap:wrap;gap:6px}.eo-adds .chip{display:inline-flex;align-items:baseline;gap:6px;padding:8px 12px;font-size:14px;font-weight:600;border-width:1px;border-radius:999px}.eo-adds .chip small{opacity:.75}
+.eo-tot{display:grid;gap:4px;border-top:1px dashed var(--line);padding-top:10px}.eo-tot div{display:flex;justify-content:space-between}.eo-tot .big{font-size:20px}
 .ord{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;display:grid;gap:8px;border-left:5px solid var(--line)}
 .ord.st-novo{border-left-color:var(--accent);box-shadow:0 0 0 1px rgba(255,162,26,.35)}
 .ord.st-saiu,.ord.st-concluido,.ord.st-cancelado{opacity:.6}
@@ -165,6 +173,7 @@ main{padding-block:8px 16px}
 .tip{position:absolute;background:var(--fg);color:var(--bg);font-size:13px;font-weight:600;padding:5px 9px;border-radius:6px;pointer-events:none;white-space:nowrap}
 .payr{display:grid;grid-template-columns:80px 1fr 44px 90px;gap:10px;align-items:center;font-variant-numeric:tabular-nums}.payr b{text-align:right}.payr em{font-style:normal;color:var(--muted);text-align:right;font-size:14px}
 .acts2{display:flex;gap:8px;flex-wrap:wrap}.acts2 .btn{flex:1;text-align:center;text-decoration:none;display:flex;flex-direction:column;align-items:center;justify-content:center}.acts2 .btn small{font-weight:600;font-size:12px;opacity:.75}
+.ord .acts2 .btn{flex:1 1 100%}.ord .acts2 .ghost{flex:1 1 0;min-height:44px}
 .credit{text-align:center;padding-block:24px 40px;font-size:12px;letter-spacing:.04em}.credit a{color:var(--muted);text-decoration:none;opacity:.7}.credit a:hover{opacity:1;color:var(--accent)}.credit .ig{display:inline-block;width:13px;height:13px;margin:0 4px 0 3px;vertical-align:-2px;background:currentColor;-webkit-mask:url(data:image/png;base64,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) center/contain no-repeat;mask:url(data:image/png;base64,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) center/contain no-repeat}
 </style>
 </head>
@@ -270,6 +279,7 @@ function custMsg(o,to){
       ?`${oi}, ${n}! 👻🛵\nBoas notícias: seu pedido *#${nº(o)}* acabou de *sair para entrega*!\nNosso entregador já está a caminho e o seu lanche vai chegar quentinho. 🔥\n\n✅ Deixe o pagamento separado pra agilizar a entrega\n✅ Fique de olho no celular, se precisarmos a gente te chama por aqui`
       :`${oi}, ${n}! 👻🍔\nSeu pedido *#${nº(o)}* está *prontinho* e esperando por você no balcão!\nÉ só chegar e informar o número *#${nº(o)}*. 😉`,
     concluido:`${oi}, ${n}! 👻🧡\nSeu pedido *#${nº(o)}* foi *${o.mode==="entrega"?"entregue":"retirado"}* com sucesso.\n\nMuito obrigado por escolher a *Fantasminha Lanches*! Esperamos que tenha sido assombrosamente gostoso. 😋\n\n⭐ Se puder, conta pra gente o que achou. Sua opinião ajuda demais!`,
+    alterado:`${oi}, ${n}! 👻\nSeu pedido *#${nº(o)}* foi *alterado* ✏️\nConfira abaixo como ficou:`,
     cancelado:`${oi}, ${n}. 👻\nInfelizmente seu pedido *#${nº(o)}* foi *cancelado*.\nSe tiver qualquer dúvida, é só responder esta mensagem.`}[to];
   if(!head)return "";
   const L=[head,"",to==="concluido"?"🧾 *Resumo do seu pedido:*":"🧾 *Seu pedido:*"];
@@ -278,11 +288,12 @@ function custMsg(o,to){
   L.push("");
   if(+o.delivery_fee)L.push(`Subtotal: ${BRL(o.subtotal)}`,`Entrega: ${BRL(o.delivery_fee)}`);
   L.push(`💰 *Total: ${BRL(o.total)}*`,`💳 Pagamento: ${o.payment}${o.change_for?` (troco para R$ ${o.change_for})`:""}`);
-  if(o.payment==="Pix"&&D.settings.pix_key&&(to==="preparo"||to==="saiu"))L.push(`💠 Pix (celular): ${D.settings.pix_key}${D.settings.pix_name?` · ${D.settings.pix_name}`:""}`,"_Se ainda não pagou, envie o comprovante por aqui._");
+  if(o.payment==="Pix"&&D.settings.pix_key&&(to==="preparo"||to==="saiu"||to==="alterado"))L.push(`💠 Pix (celular): ${D.settings.pix_key}${D.settings.pix_name?` · ${D.settings.pix_name}`:""}`,"_Se ainda não pagou, envie o comprovante por aqui._");
   L.push(o.mode==="entrega"?`📍 Entrega: ${o.street}, ${o.number} · ${o.district}${o.complement?` (${o.complement})`:""}`:"📍 Retirada no balcão");
   L.push("",({preparo:"Qualquer dúvida, é só chamar por aqui! 👻🍔",
     saiu:o.mode==="entrega"?"Muito obrigado por pedir com a gente! 🧡\nBom apetite! 👻🍔":"Muito obrigado por pedir com a gente! 🧡\nTe esperamos! 👻🍔",
     concluido:`Bateu a fome de novo? Peça pelo nosso cardápio:\n👉 ${location.origin}\n\nAté a próxima! 👻🍔`,
+    alterado:"Se estiver tudo certo, não precisa responder. Qualquer coisa, é só chamar! 👻🍔",
     cancelado:"Pedimos desculpas pelo transtorno. 👻"})[to]);
   return L.join("\n");
 }
@@ -362,14 +373,15 @@ function renderOrders(){
 }
 function card(o){
   const s=ST[o.status], nx=NEXT[o.status], tel=String(o.phone).replace(/\D/g,"");
-  return `<article class="ord st-${o.status}"><header><b>#${nº(o)}</b><span class="pill" style="--c:${s[1]}">${s[0]}</span><span class="when">${hhmm(o.created_at)}</span></header>
+  return `<article class="ord st-${o.status}"><header><b>#${nº(o)}</b><span class="pill" style="--c:${s[1]}">${s[0]}</span>${o.edited_at?`<span class="pill" style="--c:#c58cff">✏️ Alterado</span>`:""}<span class="when">${hhmm(o.created_at)}</span></header>
   <div class="who"><b>${esc(o.customer_name)}</b> · <a href="https://api.whatsapp.com/send?phone=55${tel}" target="_blank" rel="noopener">${esc(o.phone)}</a>${o.cpf?` · CPF ${esc(o.cpf)}`:""}</div>
   <div class="addr">${o.mode==="entrega"?`🛵 <b>${esc(o.street)}, ${esc(o.number)}</b> · ${esc(o.district)} · ${esc(o.region)}${o.complement?`<br><span>${esc(o.complement)}</span>`:""}`:"🏃 <b>Retirada no balcão</b>"}</div>
   <ul class="its">${o.items.map(it=>`<li><div class="iln"><span class="qb">${it.qty}x</span><div><b>${esc(it.name)}</b>${it.size?` <span class="tag">${SZ[it.size]||it.size}</span>`:""}${it.option?` <span class="tag">${esc(it.option)}</span>`:""}${it.number?` <small class="inum">nº ${it.number}</small>`:""}
     ${it.addons.map(a=>`<div class="sub">+ ${a.qty}x ${esc(a.name)}</div>`).join("")}${it.obs?`<div class="obs">Obs: ${esc(it.obs)}</div>`:""}</div></div></li>`).join("")}</ul>
+  ${o.edited_at&&["novo","preparo"].includes(o.status)?`<a class="resend" href="${waCust(o,"alterado")}" target="_blank" rel="noopener">Enviar pedido alterado no WhatsApp</a>`:""}
   ${o.status!=="novo"?`<a class="resend" href="${waCust(o,o.status)}" target="_blank" rel="noopener">Reenviar aviso de "${s[0]}" no WhatsApp</a>`:""}
   <div class="foot2"><span>${esc(o.payment)}${o.change_for?` · troco p/ R$ ${esc(o.change_for)}`:""}</span><b>${BRL(o.total)}</b></div>
-  ${nx||o.status==="novo"||o.status==="preparo"?`<div class="acts2">${nx?`<a class="btn" href="${waCust(o,nx[0])}" target="_blank" rel="noopener" data-st="${o.id}" data-to="${nx[0]}">${nx[0]==="saiu"?(o.mode==="entrega"?"🛵 Saiu pra entrega":"🍔 Pronto pra retirada"):nx[1]} <small>· ${nx[0]==="saiu"?"finaliza e ":""}avisa no WhatsApp</small></a>`:""}${["novo","preparo"].includes(o.status)?`<button class="ghost" type="button" data-st="${o.id}" data-to="cancelado">Cancelar</button>`:""}</div>`:""}
+  ${nx||o.status==="novo"||o.status==="preparo"?`<div class="acts2">${nx?`<a class="btn" href="${waCust(o,nx[0])}" target="_blank" rel="noopener" data-st="${o.id}" data-to="${nx[0]}">${nx[0]==="saiu"?(o.mode==="entrega"?"🛵 Saiu pra entrega":"🍔 Pronto pra retirada"):nx[1]} <small>· ${nx[0]==="saiu"?"finaliza e ":""}avisa no WhatsApp</small></a>`:""}${["novo","preparo"].includes(o.status)?`<button class="ghost" type="button" data-eord="${o.id}">✏️ Alterar</button><button class="ghost" type="button" data-st="${o.id}" data-to="cancelado">Cancelar</button>`:""}</div>`:""}
   </article>`}
 $("#main").addEventListener("click",async e=>{const b=e.target.closest("[data-st]");if(!b)return;
   if(b.dataset.to==="cancelado"&&b.dataset.sure!=="1"){b.dataset.sure="1";b.textContent="Toque de novo pra cancelar";setTimeout(()=>{if(b.isConnected){b.dataset.sure="";b.textContent="Cancelar"}},3000);return}
@@ -377,6 +389,73 @@ $("#main").addEventListener("click",async e=>{const b=e.target.closest("[data-st
   const o0=D.orders.find(x=>x.id==b.dataset.st); if(o0)openWa(waCust(o0,b.dataset.to));
   b.style.pointerEvents="none";b.disabled=true;const {error}=await sb.from("orders").update({status:b.dataset.to}).eq("id",b.dataset.st);
   if(error){b.disabled=false;return fail(error)}const o=D.orders.find(x=>x.id==b.dataset.st);o.status=b.dataset.to;renderOrders()});
+
+/* ---------- editar pedido ---------- */
+function editOrder(o){
+  const itemOf=id=>D.items.find(x=>x.id==id), addByName=n=>D.addons.find(a=>a.name===n);
+  const S={lines:o.items.map(l=>({item_id:l.item_id,qty:l.qty,size:l.size||"",option:l.option||"",obs:l.obs||"",
+      addons:l.addons.map(a=>({addon_id:addByName(a.name)?.id,qty:a.qty,name:a.name})).filter(a=>a.addon_id),open:false})),
+    mode:o.mode,fee_id:(D.fees.find(f=>f.name===o.region)||{}).id||"",street:o.street||"",number:o.number||"",district:o.district||"",
+    complement:o.complement||"",payment:o.payment||"Pix",change_for:o.change_for||""};
+  const unitOf=l=>{const it=itemOf(l.item_id);if(!it)return 0;let u=it.sizes&&it.sizes.length?(+(it.sizes.find(s=>s.label===l.size)||{}).price||0):+it.price;
+    l.addons.forEach(a=>{const ad=D.addons.find(x=>x.id==a.addon_id);if(ad)u+= +ad.price*a.qty});return u};
+  const totals=()=>{const sub=S.lines.reduce((s,l)=>s+unitOf(l)*l.qty,0);const fee=S.mode==="entrega"?+((D.fees.find(f=>f.id==S.fee_id)||{}).fee||0):0;return {sub,fee,tot:sub+fee}};
+  const sh=openSheet(`<div class="sh-head"><h3>Alterar pedido #${nº(o)}</h3><button class="close" type="button" data-x aria-label="Fechar">×</button></div>
+    <p class="hint" style="margin:0">${esc(o.customer_name)} · ${esc(o.phone)}</p><div id="eoBody"></div>`);
+  const draw=()=>{const t=totals();
+    sh.querySelector("#eoBody").innerHTML=`
+    <div class="eo-lines">${S.lines.map((l,i)=>{const it=itemOf(l.item_id)||{name:"Item removido do cardápio"};const cat=D.cats.find(c=>c.id===it.category_id);
+      return `<div class="eo-l"><div class="eo-top"><div class="eo-q"><button type="button" class="ghost" data-q="${i}" data-d="-1" aria-label="Menos">−</button><b>${l.qty}</b><button type="button" class="ghost" data-q="${i}" data-d="1" aria-label="Mais">+</button></div>
+        <div class="eo-nm"><b>${esc(it.name)}</b>${l.size?` <span class="tag">${SZ[l.size]||l.size}</span>`:""}${l.option?` <span class="tag">${esc(l.option)}</span>`:""}
+        ${l.addons.map(a=>`<div class="sub">+ ${a.qty}x ${esc((D.addons.find(x=>x.id==a.addon_id)||{}).name||a.name)}</div>`).join("")}${l.obs?`<div class="obs">Obs: ${esc(l.obs)}</div>`:""}</div>
+        <b class="eo-p">${BRL(unitOf(l)*l.qty)}</b></div>
+        <div class="eo-acts"><button type="button" class="ghost" data-open="${i}">${l.open?"Fechar":"Mudar tamanho, opção, acréscimos"}</button><button type="button" class="danger" data-rm="${i}">Remover</button></div>
+        ${l.open?`<div class="eo-ed">
+          ${it.sizes&&it.sizes.length?`<div class="f"><label>Tamanho</label><select data-sz="${i}">${it.sizes.map(s=>`<option value="${s.label}"${s.label===l.size?" selected":""}>${SZ[s.label]||s.label} · ${BRL(s.price)}</option>`).join("")}</select></div>`:""}
+          ${it.options&&it.options.length?`<div class="f"><label>Opção</label><select data-op="${i}"><option value="">Sem opção</option>${it.options.map(x=>`<option${x===l.option?" selected":""}>${esc(x)}</option>`).join("")}</select></div>`:""}
+          ${cat&&cat.allows_addons?`<div class="f"><label>Acréscimos</label><div class="eo-adds">${D.addons.map(ad=>{const on=l.addons.find(a=>a.addon_id==ad.id);return `<button type="button" class="chip${on?" on":""}" data-ad="${i}" data-id="${ad.id}">${on&&on.qty>1?on.qty+"x ":""}${esc(ad.name)} <small>+${BRL(ad.price)}</small></button>`}).join("")}</div></div>`:""}
+          <div class="f"><label>Observação</label><input data-obs="${i}" value="${esc(l.obs)}" placeholder="Ex: sem cebola"></div></div>`:""}
+      </div>`}).join("")}</div>
+    <div class="f"><label for="eoAdd">Adicionar item</label><select id="eoAdd"><option value="">Escolha um item…</option>${D.cats.map(c=>`<optgroup label="${esc(c.name)}">${D.items.filter(x=>x.category_id===c.id&&x.available!==false).map(x=>`<option value="${x.id}">${x.number?x.number+". ":""}${esc(x.name)} · ${priceLabel(x)}</option>`).join("")}</optgroup>`).join("")}</select></div>
+    <div class="f"><span class="lbl"><label>Entrega</label></span><div class="seg"><button type="button" data-mode="entrega" class="${S.mode==="entrega"?"on":""}">🛵 Entrega</button><button type="button" data-mode="retirada" class="${S.mode==="retirada"?"on":""}">🏃 Retirada</button></div></div>
+    ${S.mode==="entrega"?`<div class="f"><label for="eoFee">Região (taxa)</label><select id="eoFee"><option value="">Escolha…</option>${D.fees.map(f=>`<option value="${f.id}"${f.id==S.fee_id?" selected":""}>${esc(f.name)} · ${BRL(f.fee)}</option>`).join("")}</select></div>
+      <div class="g2"><div class="f"><label for="eoSt">Rua</label><input id="eoSt" data-k="street" value="${esc(S.street)}"></div><div class="f"><label for="eoNo">Número</label><input id="eoNo" data-k="number" value="${esc(S.number)}"></div></div>
+      <div class="g2"><div class="f"><label for="eoDi">Bairro</label><input id="eoDi" data-k="district" value="${esc(S.district)}"></div><div class="f"><label for="eoCo">Complemento</label><input id="eoCo" data-k="complement" value="${esc(S.complement)}"></div></div>`:""}
+    <div class="f"><span class="lbl"><label>Pagamento</label></span><div class="seg" style="grid-template-columns:1fr 1fr 1fr">${["Pix","Cartão","Dinheiro"].map(p=>`<button type="button" data-pay="${p}" class="${S.payment===p?"on":""}">${p}</button>`).join("")}</div></div>
+    ${S.payment==="Dinheiro"?`<div class="f"><label for="eoTr">Troco para quanto?</label><input id="eoTr" data-k="change_for" inputmode="decimal" value="${esc(S.change_for)}"></div>`:""}
+    <div class="eo-tot">${t.fee?`<div><span>Subtotal</span><span>${BRL(t.sub)}</span></div><div><span>Entrega</span><span>${BRL(t.fee)}</span></div>`:""}<div class="big"><span>Novo total</span><b>${BRL(t.tot)}</b></div>${Math.abs(t.tot- +o.total)>.001?`<div><span>Antes</span><span>${BRL(o.total)}</span></div>`:""}</div>
+    <p class="err" id="eoErr" hidden></p>
+    <div class="foot"><button class="ghost" type="button" data-x>Cancelar</button><button class="btn" type="button" id="eoSave">Salvar alteração</button></div>`};
+  draw();
+  sh.addEventListener("input",e=>{const k=e.target.dataset.k;if(k)S[k]=e.target.value;const ob=e.target.dataset.obs;if(ob!=null)S.lines[ob].obs=e.target.value});
+  sh.addEventListener("change",e=>{const t=e.target;
+    if(t.id==="eoAdd"&&t.value){const it=itemOf(t.value);S.lines.push({item_id:it.id,qty:1,size:it.sizes&&it.sizes.length?it.sizes[0].label:"",option:it.options&&it.options.length?it.options[0]:"",obs:"",addons:[],open:!!((it.sizes&&it.sizes.length)||(it.options&&it.options.length))});draw()}
+    else if(t.id==="eoFee"){S.fee_id=t.value;draw()}
+    else if(t.dataset.sz!=null){S.lines[t.dataset.sz].size=t.value;draw()}
+    else if(t.dataset.op!=null){S.lines[t.dataset.op].option=t.value;draw()}});
+  sh.onclick=async e=>{const b=e.target.closest("button");if(!b)return;
+    if(b.hasAttribute("data-x"))return closeSheet();
+    if(b.dataset.q!=null){const l=S.lines[b.dataset.q];l.qty=Math.max(1,Math.min(50,l.qty+ +b.dataset.d));return draw()}
+    if(b.dataset.rm!=null){S.lines.splice(+b.dataset.rm,1);return draw()}
+    if(b.dataset.open!=null){const l=S.lines[b.dataset.open];l.open=!l.open;return draw()}
+    if(b.dataset.ad!=null){const l=S.lines[b.dataset.ad],id=+b.dataset.id,ix=l.addons.findIndex(a=>a.addon_id==id);if(ix>=0)l.addons.splice(ix,1);else l.addons.push({addon_id:id,qty:1});return draw()}
+    if(b.dataset.mode){S.mode=b.dataset.mode;return draw()}
+    if(b.dataset.pay){S.payment=b.dataset.pay;return draw()}
+    if(b.id==="eoSave"){const er=sh.querySelector("#eoErr");er.hidden=true;
+      if(!S.lines.length){er.textContent="O pedido precisa ter pelo menos 1 item. Se o cliente desistiu de tudo, use Cancelar no pedido.";er.hidden=false;return}
+      b.disabled=true;b.textContent="Salvando…";
+      const {data,error}=await sb.rpc("admin_update_order",{p_id:o.id,p:{mode:S.mode,fee_id:S.fee_id||null,street:S.street,number:S.number,district:S.district,complement:S.complement,payment:S.payment,change_for:S.change_for,
+        items:S.lines.map(l=>({item_id:l.item_id,qty:l.qty,size:l.size||null,option:l.option||null,obs:l.obs||null,addons:l.addons.map(a=>({addon_id:a.addon_id,qty:a.qty}))}))}});
+      if(error){b.disabled=false;b.textContent="Salvar alteração";er.textContent=error.message;er.hidden=false;return}
+      Object.assign(o,data);closeSheet();renderOrders();toast("Pedido alterado");
+      const s2=openSheet(`<div class="sh-head"><h3>Pedido #${nº(o)} alterado ✏️</h3><button class="close" type="button" data-x aria-label="Fechar">×</button></div>
+        <p style="margin:0">Novo total: <b>${BRL(o.total)}</b>. Mande o pedido atualizado pro cliente conferir:</p>
+        <a class="btn" href="${waCust(o,"alterado")}" target="_blank" rel="noopener" data-x style="text-align:center">Enviar pedido atualizado no WhatsApp</a>
+        <button class="ghost" type="button" data-x>Agora não</button>`);
+      s2.onclick=e=>{if(e.target.closest("[data-x]"))setTimeout(closeSheet,50)}}
+  };
+}
+$("#main").addEventListener("click",e=>{const b=e.target.closest("[data-eord]");if(!b)return;const o=D.orders.find(x=>x.id==b.dataset.eord);if(o)editOrder(o)});
 
 /* ---------- vendas ---------- */
 let SM={y:new Date().getFullYear(),m:new Date().getMonth(),by:"qty",rows:null,key:""};
