@@ -277,13 +277,13 @@ function custMsg(o,to){
   const n=String(o.customer_name).trim().split(" ")[0], h=new Date().getHours();
   const oi=h<12?"Bom dia":h<18?"Boa tarde":"Boa noite";
   const head={
-    preparo:`${oi}, ${n}! 👻\nObrigado por pedir com a gente na *Fantasminha Lanches*! 🧡\n\nSeu pedido *#${nº(o)}* foi *confirmado* e já está sendo preparado. 🍔🔥`,
+    preparo:`${oi}, ${n}! 👻\nObrigado por pedir com a gente na *Fantasminha Lanches*! 🧡\n\nSeu pedido foi *confirmado* e já está sendo preparado. 🍔🔥`,
     saiu:o.mode==="entrega"
-      ?`${oi}, ${n}! 👻🛵\nBoas notícias: seu pedido *#${nº(o)}* acabou de *sair para entrega*!\nNosso entregador já está a caminho e o seu lanche vai chegar quentinho. 🔥\n\n✅ Deixe o pagamento separado pra agilizar a entrega\n✅ Fique de olho no celular, se precisarmos a gente te chama por aqui`
-      :`${oi}, ${n}! 👻🍔\nSeu pedido *#${nº(o)}* está *prontinho* e esperando por você no balcão!\nÉ só chegar e informar o número *#${nº(o)}*. 😉`,
-    concluido:`${oi}, ${n}! 👻🧡\nSeu pedido *#${nº(o)}* foi *${o.mode==="entrega"?"entregue":"retirado"}* com sucesso.\n\nMuito obrigado por escolher a *Fantasminha Lanches*! Esperamos que tenha sido assombrosamente gostoso. 😋\n\n⭐ Se puder, conta pra gente o que achou. Sua opinião ajuda demais!`,
-    alterado:`${oi}, ${n}! 👻\nSeu pedido *#${nº(o)}* foi *alterado* ✏️\nConfira abaixo como ficou:`,
-    cancelado:`${oi}, ${n}. 👻\nInfelizmente seu pedido *#${nº(o)}* foi *cancelado*.\nSe tiver qualquer dúvida, é só responder esta mensagem.`}[to];
+      ?`${oi}, ${n}! 👻🛵\nBoas notícias: seu pedido acabou de *sair para entrega*!\nNosso entregador já está a caminho e o seu lanche vai chegar quentinho. 🔥\n\n✅ Deixe o pagamento separado pra agilizar a entrega\n✅ Fique de olho no celular, se precisarmos a gente te chama por aqui`
+      :`${oi}, ${n}! 👻🍔\nSeu pedido está *prontinho* e esperando por você no balcão!\nÉ só chegar e falar o seu nome. 😉`,
+    concluido:`${oi}, ${n}! 👻🧡\nSeu pedido foi *${o.mode==="entrega"?"entregue":"retirado"}* com sucesso.\n\nMuito obrigado por escolher a *Fantasminha Lanches*! Esperamos que tenha sido assombrosamente gostoso. 😋\n\n⭐ Se puder, conta pra gente o que achou. Sua opinião ajuda demais!`,
+    alterado:`${oi}, ${n}! 👻\nSeu pedido foi *alterado* ✏️\nConfira abaixo como ficou:`,
+    cancelado:`${oi}, ${n}. 👻\nInfelizmente seu pedido foi *cancelado*.\nSe tiver qualquer dúvida, é só responder esta mensagem.`}[to];
   if(!head)return "";
   const L=[head,"",to==="concluido"?"🧾 *Resumo do seu pedido:*":"🧾 *Seu pedido:*"];
   o.items.forEach(it=>{L.push(`• ${it.qty}x ${it.name}${it.size?` (${SZ[it.size]||it.size})`:""}${it.option?` · ${it.option}`:""} · ${BRL(it.total)}`);
