@@ -390,8 +390,8 @@ async function send(fee){
 }
 function waText(o){
   const L=[`*Novo pedido · Fantasminha Lanches*`,""];
-  o.items.forEach(it=>{L.push(`*${it.qty}x ${it.name}*${it.number?` (nº ${it.number})`:""}${it.size?` (${({P:"Pequeno",M:"Médio",G:"Grande"})[it.size]})`:""} · ${BRL(+it.total)}`);
-    if(it.option)L.push(`   > ${it.option}`);it.addons.forEach(a=>L.push(`   + ${a.qty}x ${a.name}`));if(it.obs)L.push(`   Obs: ${it.obs}`)});
+  o.items.forEach(it=>{L.push(`*${it.qty}x ${it.name}${it.option?` · ${it.option}`:""}*${it.number?` (nº ${it.number})`:""}${it.size?` (${({P:"Pequeno",M:"Médio",G:"Grande"})[it.size]})`:""} · ${BRL(+it.total)}`);
+    it.addons.forEach(a=>L.push(`   + ${a.qty}x ${a.name}`));if(it.obs)L.push(`   Obs: ${it.obs}`)});
   L.push("",`Subtotal: ${BRL(+o.subtotal)}`);
   if(ck.mode==="entrega")L.push(`Entrega (${o.region}): ${BRL(+o.fee)}`);
   L.push(`*Total: ${BRL(+o.total)}*`,`Pagamento: ${ck.pay}${ck.pay==="Dinheiro"&&ck.troco?` (troco para R$ ${ck.troco})`:""}`);
