@@ -122,6 +122,7 @@ main{padding-block:8px 16px}
 .eo-ed{display:grid;gap:10px;border-top:1px dashed var(--line);padding-top:10px}
 .eo-adds{display:flex;flex-wrap:wrap;gap:6px}.eo-adds .chip{display:inline-flex;align-items:baseline;gap:6px;padding:8px 12px;font-size:14px;font-weight:600;border-width:1px;border-radius:999px}.eo-adds .chip small{opacity:.75}
 .eo-tot{display:grid;gap:4px;border-top:1px dashed var(--line);padding-top:10px}.eo-tot div{display:flex;justify-content:space-between}.eo-tot .big{font-size:20px}
+.opl{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 8px}.opc{display:inline-flex;align-items:center;gap:4px;background:var(--surface2);border:1px solid var(--line);border-radius:999px;padding:4px 4px 4px 12px;font-weight:600;font-size:14px}.opc button{background:none;border:0;color:var(--muted);font-size:20px;line-height:1;width:30px;height:30px;border-radius:50%}.opadd{display:flex;gap:8px}.opadd input{flex:1}.opadd button{white-space:nowrap}
 .ord{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;display:grid;gap:8px;border-left:5px solid var(--line)}
 .ord.st-novo{border-left-color:var(--accent);box-shadow:0 0 0 1px rgba(255,162,26,.35)}
 .ord.st-saiu,.ord.st-concluido,.ord.st-cancelado{opacity:.6}
@@ -635,7 +636,11 @@ function editItem(it,catId){
   <div class="f"><span class="lbl"><label>Preço</label></span><div class="seg"><button type="button" data-mode="0" class="${st.sized?"":"on"}">Preço único</button><button type="button" data-mode="1" class="${st.sized?"on":""}">Tamanhos P / M / G</button></div></div>
   <div class="f" id="single"${st.sized?" hidden":""}><label for="pr">Valor (R$)</label><input id="pr" inputmode="decimal" value="${esc(money(it?.price))}" placeholder="0,00"></div>
   <div class="g3" id="sizes"${st.sized?"":" hidden"}>${["P","M","G"].map(l=>`<div class="f"><label for="s${l}">${l} (R$)</label><input id="s${l}" inputmode="decimal" value="${esc(sz(l))}" placeholder="0,00"></div>`).join("")}</div>
-  <div class="f"><label for="op">Opções de escolha (opcional)</label><input id="op" value="${esc((it?.options||[]).join(", "))}" placeholder="Ex: Geleia de pimenta, Abacaxi"><p class="hint">Separe por vírgula. O cliente escolhe uma.</p></div>
+  <div class="f"><span class="lbl"><label for="opNew">Sabores / opções de escolha (opcional)</label></span>
+    <input type="hidden" id="op" value="${esc((it?.options||[]).join(", "))}">
+    <div class="opl" id="opl"></div>
+    <div class="opadd"><input id="opNew" placeholder="Ex: Guaraná Zero" autocomplete="off"><button class="ghost" type="button" id="opAdd">+ Adicionar</button></div>
+    <p class="hint">O cliente escolhe um. Toque no × pra tirar um sabor que acabou.</p></div>
   <div class="toggle-line"><span>Disponível no cardápio</span><span class="sw"><input type="checkbox" id="av" ${it?.available===false?"":"checked"} aria-label="Disponível"><i></i></span></div>
   <p class="err" id="er" hidden></p>
   <div class="foot">${isNew?"":`<span id="delWrap"><button class="danger" type="button" id="del">Excluir</button></span>`}<button class="btn" type="button" id="save">${isNew?"Criar item":"Salvar"}</button></div>`);
@@ -644,6 +649,13 @@ function editItem(it,catId){
     box.outerHTML=src?`<img class="pv" id="pv" src="${esc(src)}" alt="Foto do item">`:`<span class="pv" id="pv">sem foto</span>`;
     sh.querySelector("#rmPh").hidden=!src};
   pv();
+  const opv=()=>sh.querySelector("#op").value.split(",").map(x=>x.trim()).filter(Boolean);
+  const opDraw=()=>{const l=opv();sh.querySelector("#opl").innerHTML=l.length?l.map((x,i)=>`<span class="opc">${esc(x)}<button type="button" data-oprm="${i}" aria-label="Tirar ${esc(x)}">×</button></span>`).join(""):`<span class="hint">Nenhum sabor cadastrado.</span>`};
+  const opAdd=()=>{const inp=sh.querySelector("#opNew");const v=inp.value.replace(/,/g," ").trim();if(!v)return;const l=opv();if(l.some(x=>x.toLowerCase()===v.toLowerCase()))return toast("Esse já está na lista",true);l.push(v);sh.querySelector("#op").value=l.join(", ");inp.value="";opDraw();inp.focus()};
+  opDraw();
+  sh.querySelector("#opAdd").onclick=opAdd;
+  sh.querySelector("#opNew").onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();opAdd()}};
+  sh.querySelector("#opl").addEventListener("click",e=>{const b=e.target.closest("[data-oprm]");if(!b)return;const l=opv();l.splice(+b.dataset.oprm,1);sh.querySelector("#op").value=l.join(", ");opDraw()});
   sh.querySelector("#ph").onchange=e=>{const f=e.target.files[0];if(!f)return;if(!f.type.startsWith("image/"))return toast("Escolha um arquivo de imagem",true);st.file=f;pv()};
   sh.onclick=async e=>{
     if(e.target.closest("[data-x]"))return closeSheet();
@@ -663,6 +675,7 @@ function editItem(it,catId){
     if(st.sized){sizes=[];for(const l of ["P","M","G"]){const v=num(sh.querySelector("#s"+l).value);if(v!=null)sizes.push({label:l,price:v})}
       if(!sizes.length)return errMsg("Coloque o valor de pelo menos um tamanho.");price=sizes[0].price}
     else{price=num(sh.querySelector("#pr").value);if(price==null)return errMsg("Coloque o preço. Ex: 24,90");}
+    if(sh.querySelector("#opNew").value.trim())opAdd();
     const opts=sh.querySelector("#op").value.split(",").map(s=>s.trim()).filter(Boolean);
     const cat=sh.querySelector("#cat").value;
     const btn=sh.querySelector("#save");btn.disabled=true;btn.textContent="Salvando…";
