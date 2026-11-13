@@ -48,11 +48,12 @@ label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08
 html[data-cor="preto"]{--bg:#0f0d0b;--muted:#b3a794;--head:var(--accent);--hl:var(--accent)}
 .top{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
 .top .wrap{display:flex;align-items:center;gap:12px;padding-block:12px;flex-wrap:wrap}
-.top h1{font-size:28px;flex:1;min-width:0}
+.top h1{font-size:26px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media (max-width:460px){.top h1 .pw{display:none}.top .wrap{gap:8px}.top a{font-size:13px}#corBtn,#logout{padding:8px 11px}#corBtn .cl{display:none}}
 .top h1 span{color:var(--hl)}
 .top a{color:var(--muted);font-size:14px}
-.tabs{display:flex;gap:6px;width:100%;overflow-x:auto}
-.tab{flex:none;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:7px 14px;font-weight:600;font-size:14px}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;width:100%}
+.tab{flex:none;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-weight:600;font-size:14px;min-height:38px}
 .tab.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
 
 main{padding-block:8px 16px}
@@ -129,7 +130,8 @@ main{padding-block:8px 16px}
 .ord header{display:flex;align-items:center;gap:10px}
 .ord header b{font-family:var(--display);font-size:28px;font-weight:400;letter-spacing:.02em}
 .pill{border:1px solid var(--c);color:var(--c);border-radius:999px;padding:2px 10px;font-size:13px;font-weight:700}
-.when{margin-left:auto;color:var(--muted);font-variant-numeric:tabular-nums}
+.when{margin-left:auto;color:var(--muted);font-variant-numeric:tabular-nums;text-align:right;line-height:1.15}
+.ago{display:block;font-size:12px;font-weight:700;color:var(--muted)}.ago.late{color:#1a1206;background:#ffd23f;border-radius:999px;padding:1px 8px;margin-top:2px}
 .who a{color:var(--accent)}
 .addr span{color:var(--muted)}
 .its{list-style:none;margin:0;padding:10px 0;border-block:1px dashed var(--line);display:grid;gap:8px}
@@ -195,7 +197,7 @@ main{padding-block:8px 16px}
 
 <div id="app" hidden>
   <header class="top"><div class="wrap">
-    <h1>Painel <span>Fantasminha</span></h1>
+    <h1><span class="pw" style="color:inherit">Painel </span><span>Fantasminha</span></h1>
     <a href="./" target="_blank" rel="noopener">Ver cardápio</a>
     <button class="ghost" id="corBtn" type="button">⚫ Preto</button>
     <button class="ghost" id="logout" type="button">Sair</button>
@@ -354,6 +356,8 @@ function alertNew(o){beep();
   document.title=`(${D.orders.filter(x=>x.status==="novo").length}) Painel Fantasminha`}
 function badge(){const b=$("#newBadge");b.textContent=unseen;b.hidden=!unseen}
 const hhmm=d=>new Date(d).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
+function agoTxt(t,st){const m=Math.max(0,Math.floor((Date.now()-new Date(t))/60000));const txt=m<1?"agora":m<60?`há ${m} min`:`há ${Math.floor(m/60)}h${String(m%60).padStart(2,"0")}`;return [txt,(st==="novo"&&m>=10)||(st==="preparo"&&m>=45)]}
+setInterval(()=>document.querySelectorAll(".ago").forEach(e=>{const [t,l]=agoTxt(e.dataset.t,e.dataset.s);e.textContent=t;e.classList.toggle("late",l)}),30000);
 let OF="novo", OQ="";
 function renderOrders(){
   const FIN=["saiu","concluido","cancelado"], open=D.orders.filter(o=>!FIN.includes(o.status)), closed=D.orders.filter(o=>FIN.includes(o.status));
@@ -377,7 +381,7 @@ function renderOrders(){
 }
 function card(o){
   const s=ST[o.status], nx=NEXT[o.status], tel=String(o.phone).replace(/\D/g,"");
-  return `<article class="ord st-${o.status}"><header><b>#${nº(o)}</b><span class="pill" style="--c:${s[1]}">${s[0]}</span>${o.edited_at?`<span class="pill" style="--c:#c58cff">✏️ Alterado</span>`:""}<span class="when">${hhmm(o.created_at)}</span></header>
+  return `<article class="ord st-${o.status}"><header><b>#${nº(o)}</b><span class="pill" style="--c:${s[1]}">${s[0]}</span>${o.edited_at?`<span class="pill" style="--c:#c58cff">✏️ Alterado</span>`:""}<span class="when">${hhmm(o.created_at)}${["novo","preparo"].includes(o.status)?`<small class="ago${agoTxt(o.created_at,o.status)[1]?" late":""}" data-t="${o.created_at}" data-s="${o.status}">${agoTxt(o.created_at,o.status)[0]}</small>`:""}</span></header>
   <div class="who"><b>${esc(o.customer_name)}</b> · <a href="https://api.whatsapp.com/send?phone=55${tel}" target="_blank" rel="noopener">${esc(o.phone)}</a>${o.cpf?` · CPF ${esc(o.cpf)}`:""}</div>
   <div class="addr">${o.mode==="entrega"?`🛵 <b>${esc(o.street)}, ${esc(o.number)}</b> · ${esc(o.district)} · ${esc(o.region)}${o.complement?`<br><span>${esc(o.complement)}</span>`:""}`:"🏃 <b>Retirada no balcão</b>"}</div>
   <ul class="its">${o.items.map(it=>`<li><div class="iln"><span class="qb">${it.qty}x</span><div><b>${esc(it.name)}</b>${it.size?` <span class="tag">${SZ[it.size]||it.size}</span>`:""}${it.option?` <span class="tag">${esc(it.option)}</span>`:""}${it.number?` <small class="inum">nº ${it.number}</small>`:""}
@@ -738,7 +742,7 @@ boot();
 function setCor(c){const p=c==="preto";if(p)document.documentElement.dataset.cor="preto";else delete document.documentElement.dataset.cor;
   try{localStorage.setItem("fz_cor",p?"preto":"vermelho")}catch(e){}
   const m=document.querySelector('meta[name="theme-color"]');if(m)m.content=p?"#0f0d0b":"#e3191c";corLbl()}
-function corLbl(){const b=document.getElementById("corBtn");if(!b)return;const p=document.documentElement.dataset.cor==="preto";b.textContent=p?"🔴 Vermelho":"⚫ Preto";b.title=p?"Mudar o fundo para vermelho":"Mudar o fundo para preto";b.setAttribute("aria-label",p?"Mudar o fundo para vermelho":"Mudar o fundo para preto")}
+function corLbl(){const b=document.getElementById("corBtn");if(!b)return;const p=document.documentElement.dataset.cor==="preto";b.innerHTML=p?"🔴<span class=\"cl\"> Vermelho</span>":"⚫<span class=\"cl\"> Preto</span>";b.setAttribute("aria-label",p?"Mudar o fundo para vermelho":"Mudar o fundo para preto");b.title=p?"Mudar o fundo para vermelho":"Mudar o fundo para preto";b.setAttribute("aria-label",p?"Mudar o fundo para vermelho":"Mudar o fundo para preto")}
 document.getElementById("corBtn").onclick=()=>setCor(document.documentElement.dataset.cor==="preto"?"vermelho":"preto");corLbl();
 </script>
 </body>
